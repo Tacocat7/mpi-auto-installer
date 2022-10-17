@@ -1,3 +1,4 @@
+#!/bin/bash
 read -p "How many nodes would you like to connect?: " number_of_nodes
 
 
