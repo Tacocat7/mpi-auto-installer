@@ -56,6 +56,25 @@ do
         read -p "Enter the IP of your slave node number $i: " slave_ip
     done
     
+    ping -c1 $slave_ip 1>/dev/null 2>/dev/null
+    SUCCESS=$?
+    
+    while [ $SUCCESS -ne 0 ]
+    do
+        
+        ping -c1 $slave_ip 1>/dev/null 2>/dev/null
+        SUCCESS=$?
+        
+        echo "ping from $IP was not successful, please try again"
+        read -p "Enter the IP of your slave node number $i: " slave_ip
+        
+        
+    done
+    
+    echo "ping from $slave_ip successful"
+    
+    
+    
     read -p "Enter the identification that will be associated to your node: " slave_name
     
     while [ -z "$slave_name" ];
@@ -71,28 +90,5 @@ do
     
 done
 
-
-
-# echo ${cluster_ips[@]}
-# echo ${cluster_names[@]}
-
-# Checks if the IPs the user inputted exist
-
-for IP in "${cluster_ips[@]}"
-do
-    
-    echo $IP
-    
-    ping -c1 $IP 1>/dev/null 2>/dev/null
-    SUCCESS=$?
-    
-    if [ $SUCCESS -eq 0 ]
-    then
-        echo "ping from $IP successful moving on"
-    else
-        echo "ping from $IP was not successful, please try again"
-    fi
-    
-done
 
 #EOF
