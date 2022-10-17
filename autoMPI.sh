@@ -91,6 +91,7 @@ then
 else
   echo "ping from $IP was not successful, please try again"
 fi
-#EOF
 
 done
+
+#EOF
