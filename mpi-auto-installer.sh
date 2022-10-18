@@ -76,7 +76,8 @@ do
     
     
     
-    read -p "Enter the identification that will be associated to your node: " slave_name
+    read -p "Enter the identification that will be associated to your node, no spaces: " slave_name
+    
     
     while [ -z "$slave_name" ];
     do
@@ -86,10 +87,34 @@ do
         
     done
     
+    while [[ "$slave_name" =~ " " ]]
+    do
+        
+        echo "Error cannot have spaces"
+        read -p "Enter the identification that will be associated to your node: " slave_name
+        
+    done
+    
+    
     cluster_ips+=($slave_ip)
     cluster_names+=($slave_name)
     
 done
+
+echo "${#cluster_names[@]}"
+
+touch file
+
+filename="file"
+
+for index in ${!cluster_names[*]}; do
+    echo -e "${cluster_names[$index]} \t ${cluster_ips[$index]}" >> $filename
+done
+
+
+cat $filename
+
+rm $filename
 
 
 #EOF
