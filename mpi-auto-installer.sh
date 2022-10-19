@@ -1,4 +1,5 @@
 #!/bin/bash
+
 read -p "How many nodes would you like to connect?: " number_of_nodes
 
 
@@ -101,20 +102,33 @@ do
     
 done
 
-echo "${#cluster_names[@]}"
 
-touch file
+filename="hosts"
 
-filename="file"
+touch $filename
+
+echo -e "127.0.0.1 \t localhost" >> $filename
 
 for index in ${!cluster_names[*]}; do
-    echo -e "${cluster_names[$index]} \t ${cluster_ips[$index]}" >> $filename
+    echo -e "${cluster_ips[$index]} \t ${cluster_names[$index]}" >> $filename
 done
 
+echo -e "\n# The following lines are desirable for IPv6 capable hosts " >> $filename
+echo "::1     ip6-localhost ip6-loopback" >> $filename
+echo "fe00::0 ip6-localnet" >> $filename
+echo "ff00::0 ip6-mcastprefix" >> $filename
+echo "ff02::1 ip6-allnodes" >> $filename
+echo "ff02::2 ip6-allrouters" >> $filename
+
+cp /etc/hosts ./backup/
+sudo rm /etc/host
+mv $filename /etc/
+
+# chmod +w /etc/hosts
 
 cat $filename
 
-rm $filename
+# rm $filename
 
 
 #EOF
