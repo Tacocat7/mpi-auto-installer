@@ -15,13 +15,13 @@ inputs their system information.
 
 # To run:
 
-'''bash 
+'''bash
 sudo ./mpi-installer-v2.sh
 '''
 
 or 
 
-'''bash 
+'''bash
 sudo bash mpi-installer-v3.sh
 '''
 
