@@ -4,6 +4,8 @@ clear
 
 config_file="/etc/mpi-config.conf"
 head_ip=$( ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}' )
+cluster_names=()
+cluster_ips=()
 
 # Checks if program is running as root
 if [ "$EUID" -ne 0 ]; then
@@ -11,40 +13,43 @@ if [ "$EUID" -ne 0 ]; then
     exit
 fi
 
+# Function to write config file
 function set_config(){
     sudo sed -i "s/^\($1\s*=\s*\).*\$/\1$2/" $config_file
     source "$config_file"
-    
 }
 
+# Function to join an array into one string
 join_array() {
     local IFS="$1"
-    shift
+    # shift
     echo "$*"
 }
+
+# Checks for debug arguments
+if [ "$1" == "-r" ] || [ "$1" == "-d" ]; then
+    sudo rm $config_file
+fi
 
 # Generates an empty config file to /etc/mpi-config,
 # removes and regenerates if it is run with the
 # regenerate parameter
 generate_config() {
     
-    if [ "$1" == "regenerate" ]; then
-        sudo rm $config_file
-    fi
-    
     sudo touch $config_file
     
     sudo echo "cluster_name=''"  >> $config_file
     sudo echo "cluster_size=" >> $config_file
     sudo echo "node_names=" >> $config_file
-    sudo echo "node_ips=()" >> $config_file
+    sudo echo "node_ips=" >> $config_file
     sudo echo "changed_hosts=0" >> $config_file
     sudo echo "mpi_username=''" >> $config_file
+    sudo echo "user_set=0" >> $config_file
     sudo echo "nfs_set=0" >> $config_file
     sudo echo "ssh_set=0" >> $config_file
-    sudo echo "mpi_distribution=''" >> $config_file
     sudo echo "mpi_set=0" >> $config_file
-    sudo echo "setup_complete=false" >> $config_file
+    sudo echo "mpi_distribution=''" >> $config_file
+    sudo echo "setup_complete=0" >> $config_file
     sudo echo "setup_working=0" >> $config_file
     
     sleep 0.5
@@ -65,17 +70,16 @@ source "$config_file"
 
 echo -e "Welcome to Pleiades MPI installer version 0.2! \n"
 
-# User inputs name for cluster
-read -p "Enter a name for your cluster: " name
-set_config cluster_name $name
 
 DONE=false
 
-cluster_names=()
-cluster_ips=()
-
 # Main setup loop
-while [ "$DONE" = false ] && [ "$setup_complete" = false ]; do
+while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
+    
+    # User inputs name for cluster
+    read -p "Enter a name for your cluster: " name
+    set_config cluster_name $name
+    
     
     read -p "How many nodes would you like to connect?: " number_of_nodes
     echo
@@ -155,10 +159,17 @@ while [ "$DONE" = false ] && [ "$setup_complete" = false ]; do
         
     done
     
-    node_names_string=$(join_array  ,"${cluster_names[@]}")
-    set_config node_names $node_names_string
-    # echo $node_names    
     
+    # Joins the arrays with the cluster data, and serializes it to config file
+    node_ips_string=$(join_array  ,"${cluster_ips[@]}")
+    # echo "join_array :: $node_ips_string"
+    set_config node_ips $node_ips_string
+    node_names_string=$(join_array  ,"${cluster_names[@]}")
+    # echo "join_array :: $node_names_string"
+    set_config node_names $node_names_string
+    
+    # cluster_names=( "${cluster_names[@]/' '} " )
+    # cluster_ips=( "${cluster_ips[@]/' '} " )
     
     # Generates a hosts file
     hosts_file="hosts"
@@ -178,10 +189,10 @@ while [ "$DONE" = false ] && [ "$setup_complete" = false ]; do
     echo "ff02::2 ip6-allrouters" >> $hosts_file
     
     # Creates a backup folder for the user's old hosts file
-    if [ ! -d "./backup" ]; then    
+    if [ ! -d "./backup" ]; then
         mkdir backup
     fi
-
+    
     rm ./backup/hosts
     sudo mv /etc/hosts ./backup/hosts
     sudo mv $hosts_file /etc/
@@ -191,12 +202,67 @@ while [ "$DONE" = false ] && [ "$setup_complete" = false ]; do
     set_config changed_hosts 1
     
     sudo cp $config_file ./backup/
-    cat /etc/hosts
-    echo
-    cat $config_file
-    echo
-    echo "Script terminated"
+    
+    # echo $mpi_username
+    
+    mpi_user="mpiuser"
+    
+    echo -e "Which profile name would you like to use for your mpi user? "
+    echo -e "\t 1) $mpi_user \n \t 2) $cluster_name \n \t 3) Other"
+    
+    read -p "Profile name[1]: " user_selection
+    
+    
+    if [ "$user_selection" == "2" ]; then
+        
+        set_config mpi_username $cluster_name
+        # echo "Set username to $cluster_name"
+        
+        elif [ "$user_selection" == "3" ]; then
+        
+        read -p "Enter your preferred mpi profile name: " user_name
+        
+        
+        while [ -z "$user_name" ]; do
+            
+            echo "Error cannot be empty"
+            read -p "Enter your preferred mpi profile name, no spaces: " user_name
+            
+        done
+        
+        while [[ "$user_name" =~ " " ]]; do
+            
+            echo "Error cannot have spaces"
+            read -p "Enter your preferred mpi profile name, no spaces: " user_name
+            
+        done
+        
+        set_config mpi_username $user_name
+        # echo "Set username to $user_name"
+        # echo $mpi_username
+    else
+        
+        set_config mpi_username $mpi_user
+        # echo "Set username to $mpi_user"
+        # echo $mpi_username
+        
+    fi
 
+    echo
+    
+    if [ "$1" == "-d" ]; then
+        
+        cat /etc/hosts
+        echo
+        cat $config_file
+        echo
+        echo "Script terminated"
+        
+        
+    fi
+    
+    
+    
     exit 0
     
     
