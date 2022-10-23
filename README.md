@@ -8,9 +8,9 @@ crafted for a small hardware cluster built from 8 outdated office computers.
 
 ### The program is currently in active development and not finished!
 
-Version 2 of the script takes in certain user input such as node names and IPs to write to the system's ```bash /etc/hosts``` 
+Version 2 of the script takes in certain user input such as node names and IPs to write to the system's ```/etc/hosts``` 
 file. The script backs up the old file, **but deletes the file in the backup folder at the program start!**  The current 
-script also generates a config file at ```bash /etc/mpi-config.conf``` where it is then updated dynamically while the user
+script also generates a config file at ```/etc/mpi-config.conf``` where it is then updated dynamically while the user
 inputs their system information. 
 
 # To run:
@@ -31,6 +31,6 @@ sudo bash mpi-installer-v3.sh
 
 1. Finish the script
 2. Escape all the characters and secure the config file
-3. Interface witha Java GUI library
+3. Interface with a Java GUI library
 
 
