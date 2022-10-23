@@ -22,8 +22,11 @@ sudo ./mpi-installer-v2.sh
 or 
 
 ```bash
-sudo bash mpi-installer-v3.sh
+sudo bash mpi-installer-v2.sh
 ```
+
+Running the script with -d parameter regenerates the config file and displays the edited files the program creates
+Running the script with -r parameter only regenerates the config file
 
 
 
