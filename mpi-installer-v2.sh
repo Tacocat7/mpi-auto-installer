@@ -248,6 +248,12 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         
     fi
 
+    read -s -p "Enter a password for your user: " user_password
+    sudo useradd -m "$mpi_username"
+    echo "$mpi_username:$user_password" | sudo chpasswd
+
+    set_config user_set 1
+
     echo
     
     if [ "$1" == "-d" ]; then
@@ -257,6 +263,8 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         cat $config_file
         echo
         echo "Script terminated"
+
+        sudo deluser --remove-home $mpi_username
         
         
     fi
