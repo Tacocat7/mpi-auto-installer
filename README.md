@@ -37,5 +37,5 @@ Running the script with -r parameter only regenerates the config file
 3. Interface with a Java GUI library
 4. Fix comma glitch during serialization
 5. Edit the tab length when picking options for profile name
-
+6. Make the program POSIX friendly
 
