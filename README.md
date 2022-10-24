@@ -35,5 +35,7 @@ Running the script with -r parameter only regenerates the config file
 1. Finish the script
 2. Escape all the characters and secure the config file
 3. Interface with a Java GUI library
+4. Fix comma glitch during serialization
+
 
 
