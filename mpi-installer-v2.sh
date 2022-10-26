@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo apt-get update -y
+
 clear
 
 config_file="/etc/mpi-config.conf"
@@ -7,22 +9,23 @@ head_ip=$( ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]
 cluster_names=()
 cluster_ips=()
 
-
 # Checks if program is running as root
 if [ "$EUID" -ne 0 ]; then
     echo "Please run this program as root"
     exit
 fi
 
+# Checks for debug arguments
+if [ "$1" == "-r" ] || [ "$1" == "-d" ]; then
+    sudo rm $config_file
+fi
 
-# Function to copy and move a specific file to /backup folder and put 
+# Function to copy and move a specific file to /backup folder and put
 # another file in its place
-function move_file(){        
-        sudo mv $1 ./backup/$2
-        sudo mv $3 $4
-    }
-
-
+function move_file(){
+    sudo mv $1 ./backup/$2
+    sudo mv $3 $4
+}
 
 # Function to write config file
 function set_config(){
@@ -37,15 +40,10 @@ function join_array() {
     echo "$*"
 }
 
-# Checks for debug arguments
-if [ "$1" == "-r" ] || [ "$1" == "-d" ]; then
-    sudo rm $config_file
-fi
-
 # Generates an empty config file to /etc/mpi-config,
 # removes and regenerates if it is run with the
 # regenerate parameter
-generate_config() {
+function generate_config() {
     
     sudo touch $config_file
     
@@ -55,7 +53,7 @@ generate_config() {
     sudo echo "node_ips=" >> $config_file
     sudo echo "changed_hosts=0" >> $config_file
     sudo echo "mpi_username=''" >> $config_file
-    sudo echo "master=" >> $config_file
+    sudo echo "master=''" >> $config_file
     sudo echo "user_set=0" >> $config_file
     sudo echo "nfs_set=0" >> $config_file
     sudo echo "ssh_set=0" >> $config_file
@@ -205,18 +203,18 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         mkdir backup
     fi
     
-
+    
     
     rm ./backup/hosts
-
-        
+    
+    
     
     move_file /etc/hosts hosts $hosts_file /etc/
-
+    
     #sudo mv /etc/hosts ./backup/hosts
     #sudo mv $hosts_file /etc/
-
-
+    
+    
     
     echo -e "/etc/hosts file generated and updated! A backup was copied to the backup folder \n"
     
@@ -274,9 +272,9 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     echo "$mpi_username:$user_password" | sudo chpasswd
     
     set_config user_set 1
-
-
-
+    
+    
+    
     
     
     
@@ -287,50 +285,78 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         set_config master "1"
         sudo apt-get update -y
         sudo apt-get install nfs-kernel-server -y
+        
+    done
     
-    done    
-
     filename="exports"
     touch $filename
-
-
+    
+    
     for IP in ${cluster_ips[@]}; do
         if [ "$head_ip" != "$IP" ]; then
-        sudo echo "/home/mpiuser $IP(rw,sync,no_subtree_check)" >> $filename
+            sudo echo "/home/mpiuser $IP(rw,sync,no_subtree_check)" >> $filename
         fi
     done
-
-
-
+    
     move_file /etc/exports exports $filename /etc/
-
+    
     echo -e "Moved exports file to backup!"
     echo -e "Restarting Service... \n"
     sleep 0.2
-
-    sudo service nfs-kernel-server restart    
-
+    echo -e "Done!\n"
+    
+    echo -e "$HOSTNAME set up! \n"
+    echo "Run node scripts to continue..."
+    
+    sudo service nfs-kernel-server restart
+    
+    read -p "Enter the port to send NODE data to [60]: " port
+    
+    if [ -z $port ]; then
+        
+        port="60"
+        
+    fi
+    
+    sudo apt-get install netcat
+    
+    
+    
+    
+    for IP in ${cluster_ips[@]}; do
+        if [ "$head_ip" != "$IP" ]; then
+            sudo netcat -w 2 $IP $port < /etc/hosts
+        fi
+    done
+    
+    
+    
+    
+    
+    #END OF PROGRAM
+    
     
     if [ "$1" == "-d" ]; then
         
         cat /etc/hosts
         echo
         cat $config_file
+        sudo rm -r ./backup
         echo
         echo "Script terminated"
         
         sudo deluser --remove-home $mpi_username
         
         if [ "$master" == "1" ]; then
-        sudo apt-get purge nfs-kernel-server
-        echo ""
+            sudo apt-get purge nfs-kernel-server
+            echo
         else
-
-        #sudo apt-get purge nfs-common
-        echo "Didnt purge"
-
+            
+            #sudo apt-get purge nfs-common
+            echo "Didnt purge"
+            
         fi
-
+        
         
     fi
     
