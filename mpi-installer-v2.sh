@@ -268,6 +268,7 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     fi
     
     read -s -p "Enter a password for your user: " user_password
+    echo
     sudo useradd -m "$mpi_username"
     echo "$mpi_username:$user_password" | sudo chpasswd
     
@@ -300,15 +301,15 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     
     move_file /etc/exports exports $filename /etc/
     
-    echo -e "Moved exports file to backup!"
+    echo -e "Moved exports file to backup! \n"
     echo -e "Restarting Service... \n"
+    sudo service nfs-kernel-server restart
+
     sleep 0.2
     echo -e "Done!\n"
     
     echo -e "$HOSTNAME set up! \n"
-    echo "Run node scripts to continue..."
     
-    sudo service nfs-kernel-server restart
     
     read -p "Enter the port to send NODE data to [60]: " port
     
@@ -317,8 +318,15 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         port="60"
         
     fi
+
+    # echo $head_ip
+
+    echo -e "Transmitting packets from $head_ip on port $port"
+
+    read -p "Run node scripts to continue..."
+
     
-    sudo apt-get install netcat
+    # sudo apt-get install netcat
     
     
     
