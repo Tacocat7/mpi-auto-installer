@@ -14,6 +14,16 @@ if [ "$EUID" -ne 0 ]; then
     exit
 fi
 
+
+# Function to copy and move a specific file to /backup folder and put 
+# another file in its place
+function move_file(){        
+        sudo mv $1 ./backup/$2
+        sudo mv $3 $4
+    }
+
+
+
 # Function to write config file
 function set_config(){
     sudo sed -i "s/^\($1\s*=\s*\).*\$/\1$2/" $config_file
@@ -21,7 +31,7 @@ function set_config(){
 }
 
 # Function to join an array into one string
-join_array() {
+function join_array() {
     local IFS="$1"
     # shift
     echo "$*"
@@ -195,9 +205,18 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         mkdir backup
     fi
     
+
+    
     rm ./backup/hosts
-    sudo mv /etc/hosts ./backup/hosts
-    sudo mv $hosts_file /etc/
+
+        
+    
+    move_file /etc/hosts hosts $hosts_file /etc/
+
+    #sudo mv /etc/hosts ./backup/hosts
+    #sudo mv $hosts_file /etc/
+
+
     
     echo -e "/etc/hosts file generated and updated! A backup was copied to the backup folder \n"
     
@@ -255,42 +274,42 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     echo "$mpi_username:$user_password" | sudo chpasswd
     
     set_config user_set 1
+
+
+
     
     
     
-    if test -f "/etc/exports";then
-        echo "Exists !"
-    else
-        echo "Didnt work"
-    fi
-    
-    
-    echo $HOSTNAME
-    echo "${cluster_names[0]}"
     while [ "$HOSTNAME" == "${cluster_names[0]}" ] && test ! -f "/etc/exports"; do
         
+        echo ""
         read -p "Ready to install NFS server! Continue? [y]: " nfs_input
-        echo "DEBUG :: running...NFS"
         set_config master "1"
         sudo apt-get update -y
         sudo apt-get install nfs-kernel-server -y
-        
+    
+    done    
+
+    filename="exports"
+    touch $filename
+
+
+    for IP in ${cluster_ips[@]}; do
+        if [ "$head_ip" != "$IP" ]; then
+        sudo echo "/home/mpiuser $IP(rw,sync,no_subtree_check)" >> $filename
+        fi
     done
-    
-    
-    read -p "Ready to install NFS common! Continue? [y]: "
-    
-    sudo apt get update 
-    echo "DEBUG :: running...NFS-COMMON"
-    sudo apt-get install nfs-common -y
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+    move_file /etc/exports exports $filename /etc/
+
+    echo -e "Moved exports file to backup!"
+    echo -e "Restarting Service... \n"
+    sleep 0.2
+
+    sudo service nfs-kernel-server restart    
+
     
     if [ "$1" == "-d" ]; then
         
@@ -303,10 +322,15 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         sudo deluser --remove-home $mpi_username
         
         if [ "$master" == "1" ]; then
-            sudo apt-get remove nfs-kernel-server
+        sudo apt-get purge nfs-kernel-server
+        echo ""
+        else
+
+        #sudo apt-get purge nfs-common
+        echo "Didnt purge"
+
         fi
 
-        sudo apt-get remove nfs-common
         
     fi
     
