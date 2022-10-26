@@ -7,6 +7,7 @@ head_ip=$( ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]
 cluster_names=()
 cluster_ips=()
 
+
 # Checks if program is running as root
 if [ "$EUID" -ne 0 ]; then
     echo "Please run this program as root"
@@ -44,6 +45,7 @@ generate_config() {
     sudo echo "node_ips=" >> $config_file
     sudo echo "changed_hosts=0" >> $config_file
     sudo echo "mpi_username=''" >> $config_file
+    sudo echo "master=" >> $config_file
     sudo echo "user_set=0" >> $config_file
     sudo echo "nfs_set=0" >> $config_file
     sudo echo "ssh_set=0" >> $config_file
@@ -247,14 +249,48 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         # echo $mpi_username
         
     fi
-
+    
     read -s -p "Enter a password for your user: " user_password
     sudo useradd -m "$mpi_username"
     echo "$mpi_username:$user_password" | sudo chpasswd
-
+    
     set_config user_set 1
-
-    echo
+    
+    
+    
+    if test -f "/etc/exports";then
+        echo "Exists !"
+    else
+        echo "Didnt work"
+    fi
+    
+    
+    echo $HOSTNAME
+    echo "${cluster_names[0]}"
+    while [ "$HOSTNAME" == "${cluster_names[0]}" ] && test ! -f "/etc/exports"; do
+        
+        read -p "Ready to install NFS server! Continue? [y]: " nfs_input
+        echo "DEBUG :: running...NFS"
+        set_config master "1"
+        sudo apt-get update -y
+        sudo apt-get install nfs-kernel-server -y
+        
+    done
+    
+    
+    read -p "Ready to install NFS common! Continue? [y]: "
+    
+    sudo apt get update 
+    echo "DEBUG :: running...NFS-COMMON"
+    sudo apt-get install nfs-common -y
+    
+    
+    
+    
+    
+    
+    
+    
     
     if [ "$1" == "-d" ]; then
         
@@ -263,13 +299,16 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         cat $config_file
         echo
         echo "Script terminated"
-
+        
         sudo deluser --remove-home $mpi_username
         
+        if [ "$master" == "1" ]; then
+            sudo apt-get remove nfs-kernel-server
+        fi
+
+        sudo apt-get remove nfs-common
         
     fi
-    
-    
     
     exit 0
     
