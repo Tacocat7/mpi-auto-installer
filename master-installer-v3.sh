@@ -20,7 +20,10 @@ echo "Done!"
 
 fi
 
-
+# Creates a backup folder for all files being replaced
+if [ ! -d "./backup" ]; then
+    mkdir backup
+fi
 
 
 clear
@@ -96,11 +99,10 @@ if [ ! -f "$config_file" ]; then
     generate_config
 fi
 
-# Source the config file
+# Calls the config file and sources its variables
 source "$config_file"
 
 echo -e "Welcome to Pleiades MPI installer version 0.3! \n"
-
 
 DONE=false
 
@@ -219,11 +221,6 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     echo "ff02::1 ip6-allnodes" >> $hosts_file
     echo "ff02::2 ip6-allrouters" >> $hosts_file
     
-    # Creates a backup folder for the user's old hosts file
-    if [ ! -d "./backup" ]; then
-        mkdir backup
-    fi
-    
     
     
     rm ./backup/hosts
@@ -235,9 +232,7 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     set_config changed_hosts 1
     
     sudo cp $config_file ./backup/
-    
-    # echo $mpi_username
-    
+        
     mpi_user="mpiuser"
     
     echo -e "Which profile name would you like to use for your mpi user? "
@@ -320,7 +315,7 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     echo -e "$HOSTNAME set up! \n"
     
     
-    read -p "Enter the port to send NODE data to [60]: " port
+    read -p "Enter the port to send NODE data to [1000]: " port
     
     if [ -z $port ]; then
         
@@ -328,17 +323,11 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         
     fi
 
-    # echo $head_ip
 
     echo -e "Transmitting packets from $head_ip on port $port"
-
     read -p "Run node scripts to continue..."
 
-    
     # sudo apt-get install netcat
-    
-    
-    
     
     for IP in ${cluster_ips[@]}; do
         if [ "$head_ip" != "$IP" ]; then
