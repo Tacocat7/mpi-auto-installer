@@ -29,7 +29,7 @@ Alternatively, you can install the program through a .deb package
 with 
 
 ```bash
-sudo apt install .slaveinstaller_0.3-1_all.deb
+sudo apt install ./slaveinstaller_0.3-1_all.deb
 ```
 and running the application with
 
