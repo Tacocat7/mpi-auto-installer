@@ -296,7 +296,7 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     filename="exports"
     touch $filename
     
-    
+    # Generates an exports file and replaces it with the default one
     for IP in ${cluster_ips[@]}; do
         if [ "$head_ip" != "$IP" ]; then
             sudo echo "/home/mpiuser $IP(rw,sync,no_subtree_check)" >> $filename
@@ -308,35 +308,33 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     echo -e "Moved exports file to backup! \n"
     echo -e "Restarting Service... \n"
     sudo service nfs-kernel-server restart
-
     sleep 0.2
     echo -e "Done!\n"
-    
-    echo -e "$HOSTNAME set up! \n"
-    
-    
+    echo -e "NFS server for $HOSTNAME has been set up! \n"
+
+
+    # Port to transmit netcat data
     read -p "Enter the port to send NODE data to [1000]: " port
-    
     if [ -z $port ]; then
-        
         port="1000"
-        
     fi
 
-
-    echo -e "Transmitting packets from $head_ip on port $port"
-    read -p "Run node scripts to continue..."
+    echo -e "\nTransmitting packets from $head_ip on port $port"
+    read -p "Run slave installer with \$(sudo mpi3 $head_ip $port) now, and then continue..."
 
     # sudo apt-get install netcat
     
     for IP in ${cluster_ips[@]}; do
         if [ "$head_ip" != "$IP" ]; then
             sudo netcat -w 2 $IP $port < /etc/hosts
+            sudo netcat -w 2 $IP $port < /etc/mpi-config.conf
         fi
     done
     
     
-    
+    echo -e "\nFiles transmitted to nodes!"
+
+    read -p "Testing shared files directory..."
     
     
     #END OF PROGRAM

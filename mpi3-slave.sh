@@ -74,33 +74,27 @@ else
     done
     
     echo -e "Ping from $IP successful! \n"
-    
     read -p "Enter the port that the Master is transmitting on[1000]: " PORT
     
     echo "Listening..."
-    
     sudo netcat -l $PORT
-    
-    
-    
+    sudo netcat -l $PORT
+
 fi
 
+cat /etc/mpi-config.conf
 
 if test -f ./hosts; then
     
-    if !test -f ./backup/hosts; then
-        # FOR DEBUGGING
-        rm ./backup/hosts
-        echo "Removing old file..."
-    fi
-    
+    rm ./backup/hosts > /dev/null
     move_file /etc/hosts hosts "hosts" /etc/
+    source "/etc/mpi-config.conf"
     echo -e "\nSuccessfully copied configuration from MASTER!"
 fi
 
-# sudo mount
+echo "sudo mount ${node_names[1]}:/home/$mpi_username"
 
-
+exit
 
 
 
