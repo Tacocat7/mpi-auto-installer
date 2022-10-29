@@ -25,6 +25,20 @@ or
 sudo bash mpi-installer-v2.sh
 ```
 
+Alternatively, you can install the program through a .deb package
+with 
+
+```bash
+sudo apt install ./slaveinstaller_0.3-1_all.deb
+```
+and running the application with
+
+```bash
+sudo slave-installer-v3.sh 
+```
+
+
+
 Running the script with -d parameter regenerates the config file and displays the edited files the program creates
 Running the script with -r parameter only regenerates the config file
 
