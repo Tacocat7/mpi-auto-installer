@@ -331,6 +331,8 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     for IP in ${cluster_ips[@]}; do
         if [ "$head_ip" != "$IP" ]; then
             cat /etc/mpi-config.conf /etc/hosts >> transfer 
+            echo "DEBUG :: TRANSFER"
+            cat $transfer
             sudo netcat -w 2 $IP $port < $transfer
         fi
     done

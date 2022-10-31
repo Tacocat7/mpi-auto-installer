@@ -38,7 +38,7 @@ if [ "$1" == "-ng" ] && [ -n $2 ] && [ -n $3 ]; then
     
     ping -w 1 -c 1 $2 > /dev/null
     SUCCESS=$?
-
+    
     # echo $SUCCESS
     
     if [ "$SUCCESS" != "0" ]; then
@@ -75,9 +75,16 @@ else
     
     echo -e "Ping from $IP successful! \n"
     read -p "Enter the port that the Master is transmitting on[1000]: " PORT
+    
+    if [ -z $PORT ]; then
+        
+        PORT=1000
+        
+    fi
+    
     echo "Listening..."
     sudo netcat -l $PORT
-
+    
 fi
 
 cat /etc/transfer
