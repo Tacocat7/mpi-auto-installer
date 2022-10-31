@@ -82,8 +82,10 @@ else
         
     fi
 
+    cwd
+
     sudo rm ./backup/transfer
-    touch ./transfer/transfer
+    touch ./backup/transfer
     echo "Listening..."
     sudo netcat -l $PORT | sudo tee -a ./backup/transfer
     
