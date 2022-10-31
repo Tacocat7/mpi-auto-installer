@@ -155,6 +155,8 @@ sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username
 echo "Transmitting parity check on port: $PORT "
 sudo netcat -w 2 ${node_names_array[0]} $PORT < "/etc/mpi-config.conf"
 
+if ["$(tail -1 /etc/fstab)" == ]
+
 # Edits /etc/fstab file so the nodes mount to the head node at startup
 echo "sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username" | sudo tee -a /etc/fstab
 

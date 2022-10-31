@@ -66,11 +66,12 @@ function join_array() {
 
 function check_nfs(){
     
-    # $1 $2 $3
+    echo "DEBUG :: $1 $2 $3"
     
     A="$(cat $1)"
     
     for name in $2; do
+        echo "DEBUG :: NAME: $name"
         
         if [ "$name" != $HOSTNAME ]; then
             
@@ -116,6 +117,7 @@ function generate_config() {
     sudo echo "nfs_set=0" >> $config_file
     sudo echo "ssh_set=0" >> $config_file
     sudo echo "mpi_set=0" >> $config_file
+    sudo echo "fstab_set=0" >> $config_file
     sudo echo "mpi_distribution=''" >> $config_file
     sudo echo "setup_complete=0" >> $config_file
     sudo echo "setup_working=0" >> $config_file
