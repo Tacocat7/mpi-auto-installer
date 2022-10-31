@@ -75,20 +75,18 @@ else
     
     echo -e "Ping from $IP successful! \n"
     read -p "Enter the port that the Master is transmitting on[1000]: " PORT
-    
     echo "Listening..."
-    sudo netcat -l $PORT
     sudo netcat -l $PORT
 
 fi
 
-cat /etc/mpi-config.conf
+cat /etc/transfer
 
-if test -f ./hosts; then
+if test -f ./transfer; then
     
-    rm ./backup/hosts > /dev/null
-    move_file /etc/hosts hosts "hosts" /etc/
-    source "/etc/mpi-config.conf"
+    #rm ./backup/hosts > /dev/null
+    #move_file /etc/hosts hosts "hosts" /etc/
+    source "./transfer"
     echo -e "\nSuccessfully copied configuration from MASTER!"
 fi
 
