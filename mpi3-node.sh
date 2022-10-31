@@ -140,18 +140,30 @@ else
     
 fi
 
+# Splits the transferred file, and moves the new files to /etc/mpi-config-conf and /etc/hosts
 split_file $transfer_file "#"
 
+# Sources the newly transferred config file. Now the head and the nodes have the same file, but
+# how can we make sure they have parity throughout the execution of the scripts?
 source /etc/mpi-config.conf
 
-echo $node_names
-
+# Creates an array with string of node names inside the config file. Must be converted since 
+# the config can't have arrays for some reason.
 node_names_array=(${node_names//,/ })
-echo ${arrIN[@]}
+echo "DEBUG :: NODE NAMES: ${node_names_array[@]}"
 
 sudo useradd -m "$mpi_username"
+# Needs a password to be set!!!
 
 sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username
+
+# CHECK FOR NFS HERE
+
+# Edits /etc/fstab file so the nodes mount to the head node at startup
+echo "sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username" | sudo tee -a /etc/fstab
+
+
+sudo netcat -w 2 ${node_names_array[0]} $PORT < "/etc/mpi-config"
 
 exit
 

@@ -64,6 +64,40 @@ function join_array() {
     echo "$*"
 }
 
+function check_nfs(){
+
+    $1 $2 $3
+
+    A="$(cat $1)"
+
+    for name in $2; do
+
+        sudo netcat -l $3 > /run/node-config.conf
+        B="$(cat /run/node-config.conf)"
+        
+
+        if [ "A" == "B" ]; then
+
+            echo "Parity for $name achieved!"
+
+        else
+
+            echo "Files are not the same"
+            echo "DEBUG :: A: $A" 
+            echo "DEBUG :: B: $B"
+        
+        fi
+
+    done
+
+}
+
+function compare_node(){
+
+
+
+}
+
 # Generates an empty config file to /etc/mpi-config,
 # removes and regenerates if it is run with the
 # regenerate parameter
@@ -239,7 +273,7 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     mpi_user="mpiuser"
     
     echo -e "Which profile name would you like to use for your mpi user? "
-    echo -e "\t 1) $mpi_user \n \t 2) $cluster_name \n \t 3) Other"
+    echo -e "   1) $mpi_user \n   2) $cluster_name \n   3) Other"
     
     read -p "Profile name[1]: " user_selection
     
@@ -269,14 +303,10 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         done
         
         set_config mpi_username $user_name
-        # echo "Set username to $user_name"
-        # echo $mpi_username
         
     else
         
         set_config mpi_username $mpi_user
-        # echo "Set username to $mpi_user"
-        # echo $mpi_username
         
     fi
     
@@ -327,7 +357,6 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     read -p "Run slave installer with \$(sudo mpi3 $head_ip $port) now, and then continue..."
     
     # sudo apt-get install netcat
-    
 
     sudo rm ./backup/transfer
     touch ./backup/transfer
@@ -339,15 +368,14 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
             sudo netcat -w 2 $IP $port < "./backup/transfer"
         fi
     done
-    
-    
+
     echo -e "\nFiles transmitted to nodes!"
-    
-    read -p "Testing shared files directory..."
-    
+    echo -e "\nTesting configuration..."
+
+    check_nfs /etc/mpi-config ${cluster_names[@]} $port
+
     
     #END OF PROGRAM
-    
     
     if [ "$1" == "-d" ]; then
         
