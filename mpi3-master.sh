@@ -303,7 +303,7 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     # Generates an exports file and replaces it with the default one
     for IP in ${cluster_ips[@]}; do
         if [ "$head_ip" != "$IP" ]; then
-            sudo echo "/home/mpiuser $IP(rw,sync,no_subtree_check)" >> $filename
+            sudo echo "/home/$mpi_username $IP(rw,sync,no_subtree_check)" >> $filename
         fi
     done
     
