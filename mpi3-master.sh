@@ -65,37 +65,41 @@ function join_array() {
 }
 
 function check_nfs(){
-
+    
     $1 $2 $3
-
+    
     A="$(cat $1)"
-
+    
     for name in $2; do
-
-        sudo netcat -l $3 > /run/node-config.conf
-        B="$(cat /run/node-config.conf)"
         
-
-        if [ "A" == "B" ]; then
-
-            echo "Parity for $name achieved!"
-
-        else
-
-            echo "Files are not the same"
-            echo "DEBUG :: A: $A" 
-            echo "DEBUG :: B: $B"
-        
+        if [ "$name" != $HOSTNAME ]; then
+            
+            sudo netcat -l $3 > /run/node-config.conf
+            B="$(cat /run/node-config.conf)"
+            
+            
+            if [ "A" == "B" ]; then
+                
+                echo "Parity for $name achieved!"
+                
+            else
+                
+                echo "Files are not the same"
+                echo "DEBUG :: A: $A"
+                echo "DEBUG :: B: $B"
+                
+            fi
+            
         fi
-
+        
     done
-
+    
 }
 
 function compare_node(){
-
-
-
+    
+    
+    
 }
 
 # Generates an empty config file to /etc/mpi-config,
@@ -357,23 +361,23 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     read -p "Run slave installer with \$(sudo mpi3 $head_ip $port) now, and then continue..."
     
     # sudo apt-get install netcat
-
+    
     sudo rm ./backup/transfer
     touch ./backup/transfer
     cat /etc/mpi-config.conf | sudo tee -a ./backup/transfer
     cat /etc/hosts| sudo tee -a ./backup/transfer
-
+    
     for IP in ${cluster_ips[@]}; do
-        if [ "$head_ip" != "$IP" ]; then            
+        if [ "$head_ip" != "$IP" ]; then
             sudo netcat -w 2 $IP $port < "./backup/transfer"
         fi
     done
-
+    
     echo -e "\nFiles transmitted to nodes!"
     echo -e "\nTesting configuration..."
-
+    
     check_nfs /etc/mpi-config ${cluster_names[@]} $port
-
+    
     
     #END OF PROGRAM
     

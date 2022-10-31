@@ -80,9 +80,7 @@ if [ "$1" == "-ng" ] && [ -n $2 ] && [ -n $3 ]; then
         echo "Error: IP cannot be reached"
         exit
     fi
-    
-    echo "Listening..."
-    
+        
     PORT=$3
     
 else
@@ -115,19 +113,15 @@ else
         PORT=1000
         
     fi
-    
-    echo "Listening..."
-    
+        
 fi
 
 transfer_file="./backup/transfer"
 
 sudo rm $transfer_file
-sudo netcat -l $PORT > $transfer_file
-# echo "DEBUG :: TRANSFERRED FILES"
-# cat $transfer_file
 
-# cat /etc/transfer
+echo "Listening..."
+sudo netcat -l $PORT > $transfer_file
 
 if test -f $transfer_file; then
     
@@ -157,13 +151,13 @@ sudo useradd -m "$mpi_username"
 
 sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username
 
-# CHECK FOR NFS HERE
+# Sends config file out to head node to check for parity
+echo "Transmitting parity check on port: $PORT "
+sudo netcat -w 2 ${node_names_array[0]} $PORT < "/etc/mpi-config"
 
 # Edits /etc/fstab file so the nodes mount to the head node at startup
 echo "sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username" | sudo tee -a /etc/fstab
 
-
-sudo netcat -w 2 ${node_names_array[0]} $PORT < "/etc/mpi-config"
 
 exit
 
