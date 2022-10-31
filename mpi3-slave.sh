@@ -33,9 +33,9 @@ function split_file(){
     touch ./backup/hosts
     
     while read -r line; do
-
+        
         echo $line
-
+        
         if [ "$delta_split" == "1" ]; then
             
             sudo echo "$line" >> ./backup/hosts
@@ -43,7 +43,7 @@ function split_file(){
             elif [ "$line" != "$2" ] && [ "$delta_split" == "0" ]; then
             
             sudo echo "$line" >> ./backup/mpi-config.conf
-
+            
             elif [ "$line" == "$2" ] && [ "$delta_split" == "0" ]; then
             
             delta_split=1
@@ -53,10 +53,12 @@ function split_file(){
         
     done <$1
     
+    if test -f /etc/hosts; then
+        sudo rm /etc/hosts
+    fi
     
-    
-    
-    
+    sudo mv ./backup/hosts /etc/
+    sudo mv ./backup/mpi-config.conf /etc/
     
 }
 
@@ -129,9 +131,8 @@ sudo netcat -l $PORT > $transfer_file
 
 if test -f $transfer_file; then
     
-    #rm ./backup/hosts > /dev/null
     #move_file /etc/hosts hosts "hosts" /etc/
-    source "./backup/transfer"
+    # source "./backup/transfer"
     echo -e "\nSuccessfully copied configuration from MASTER!"
 else
     
@@ -141,9 +142,11 @@ fi
 
 split_file $transfer_file "#"
 
+source /etc/mpi-config.conf
 
+sudo useradd -m "$mpi_username"
 
-# echo "sudo mount ${node_names[1]}:/home/$mpi_username"
+sudo mount ${node_names[1]}:/home/$mpi_username
 
 exit
 
