@@ -38,12 +38,11 @@ function split_file(){
 
         if [ "$delta_split" == "1" ]; then
             
-            
-            sudo echo $line >> ./backup/hosts
+            sudo echo "$line" >> ./backup/hosts
             
             elif [ "$line" != "$2" ] && [ "$delta_split" == "0" ]; then
             
-            sudo echo $line >> ./backup/mpi-config.conf
+            sudo echo "$line" >> ./backup/mpi-config.conf
 
             elif [ "$line" == "$2" ] && [ "$delta_split" == "0" ]; then
             
