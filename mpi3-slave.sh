@@ -27,6 +27,36 @@ if [ ! -d "./backup" ]; then
     mkdir backup
 fi
 
+function split_file(){
+    delta_split=0
+    touch ./backup/mpi-config.conf
+    touch ./backup/hosts
+    
+    while read -r line; do
+        if [ "$delta_split" == "1" ]; then
+            
+            echo $line >> hosts
+            
+            elif [ "$line" != "$2" ] && [ "$delta_split" == "0" ]; then
+            
+            echo $line >> mpi-config.conf
+            
+            elif [ "$line" == "$2" ] && [ "$delta_split" == "0" ]; then
+            
+            delta_split=1
+            
+        fi
+        
+        
+    done <$1
+    
+    
+    
+    
+    
+    
+}
+
 # Function to copy and move a specific file to /backup folder and put
 # another file in its place
 function move_file(){
@@ -47,8 +77,8 @@ if [ "$1" == "-ng" ] && [ -n $2 ] && [ -n $3 ]; then
     fi
     
     echo "Listening..."
-
-    PORT=$3    
+    
+    PORT=$3
     
 else
     
@@ -80,31 +110,37 @@ else
         PORT=1000
         
     fi
-
+    
     echo "Listening..."
     
 fi
 
-sudo rm ./backup/transfer
-sudo netcat -l $PORT > ./backup/transfer
-echo "DEBUG :: TRANSFERRED FILES"
-cat ./backup/transfer
+transfer_file="./backup/transfer"
+
+sudo rm $transfer_file
+sudo netcat -l $PORT > $transfer_file
+# echo "DEBUG :: TRANSFERRED FILES"
+# cat $transfer_file
 
 # cat /etc/transfer
 
-if test -f ./backup/transfer; then
+if test -f $transfer_file; then
     
     #rm ./backup/hosts > /dev/null
     #move_file /etc/hosts hosts "hosts" /etc/
     source "./backup/transfer"
     echo -e "\nSuccessfully copied configuration from MASTER!"
-else 
-
+else
+    
     echo "Error: No file recieved"
-
+    
 fi
 
-echo "sudo mount ${node_names[1]}:/home/$mpi_username"
+split_file $transfer_file "#"
+
+
+
+# echo "sudo mount ${node_names[1]}:/home/$mpi_username"
 
 exit
 
