@@ -34,16 +34,16 @@ function split_file(){
     
     while read -r line; do
 
-        echo "DEBUG :: $1 $2"
+        echo $line
 
         if [ "$delta_split" == "1" ]; then
             
             
-            echo $line >> ./backup/hosts
+            sudo echo $line >> ./backup/hosts
             
             elif [ "$line" != "$2" ] && [ "$delta_split" == "0" ]; then
             
-            echo $line >> ./backup/mpi-config.conf
+            sudo echo $line >> ./backup/mpi-config.conf
 
             elif [ "$line" == "$2" ] && [ "$delta_split" == "0" ]; then
             
