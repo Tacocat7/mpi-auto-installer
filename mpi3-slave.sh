@@ -45,13 +45,10 @@ if [ "$1" == "-ng" ] && [ -n $2 ] && [ -n $3 ]; then
         echo "Error: IP cannot be reached"
         exit
     fi
-    sudo rm ./backup/transfer
-    touch ./backup/transfer
     
     echo "Listening..."
-    
-    sudo netcat -l $3
-    
+
+    PORT=$3    
     
 else
     
@@ -84,16 +81,12 @@ else
         
     fi
 
-    cwd
-
-    sudo rm ./backup/transfer
-    touch ./backup/transfer
     echo "Listening..."
-    sudo netcat -l $PORT 
     
 fi
 
-sudo tee -a ./backup/transfer
+sudo rm ./backup/transfer
+sudo netcat -l $PORT > ./backup/transfer
 echo "DEBUG :: TRANSFERRED FILES"
 cat ./backup/transfer
 
