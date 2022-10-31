@@ -87,7 +87,7 @@ else
     
 fi
 
-cat /etc/transfer
+# cat /etc/transfer
 
 if test -f ./transfer; then
     
@@ -95,6 +95,10 @@ if test -f ./transfer; then
     #move_file /etc/hosts hosts "hosts" /etc/
     source "./transfer"
     echo -e "\nSuccessfully copied configuration from MASTER!"
+else 
+
+    echo "Error: No file recieved"
+
 fi
 
 echo "sudo mount ${node_names[1]}:/home/$mpi_username"

@@ -85,7 +85,7 @@ function generate_config() {
     sudo echo "mpi_distribution=''" >> $config_file
     sudo echo "setup_complete=0" >> $config_file
     sudo echo "setup_working=0" >> $config_file
-    sudo echo -e "\n"
+    sudo echo "##########" >> $config_file
     
     sleep 0.5
     
@@ -126,7 +126,7 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         read -p "How many nodes would you like to connect?: " number_of_nodes
         
     done
-
+    
     
     
     # Sets config file variable
@@ -271,7 +271,7 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
         set_config mpi_username $user_name
         # echo "Set username to $user_name"
         # echo $mpi_username
-
+        
     else
         
         set_config mpi_username $mpi_user
@@ -328,14 +328,15 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     
     # sudo apt-get install netcat
     
+
+    sudo rm ./backup/transfer
+    touch ./backup/transfer
+    cat /etc/mpi-config.conf | sudo tee -a ./backup/transfer
+    cat /etc/hosts| sudo tee -a ./backup/transfer
+
     for IP in ${cluster_ips[@]}; do
-        if [ "$head_ip" != "$IP" ]; then
-            touch ./backup/transfer
-            cat /etc/mpi-config.conf | sudo tee -a ./backup/transfer
-            cat /etc/hosts| sudo tee -a ./backup/transfer
-            echo "DEBUG :: TRANSFER"
-            cat ./backup/transfer
-            sudo netcat -w 2 $IP $port < ./backup/transfer
+        if [ "$head_ip" != "$IP" ]; then            
+            sudo netcat -w 2 $IP $port < "./backup/transfer"
         fi
     done
     
