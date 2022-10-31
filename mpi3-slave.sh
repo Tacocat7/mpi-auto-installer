@@ -144,9 +144,14 @@ split_file $transfer_file "#"
 
 source /etc/mpi-config.conf
 
+echo $node_names
+
+node_names_array=(${node_names//,/ })
+echo ${arrIN[@]}
+
 sudo useradd -m "$mpi_username"
 
-sudo mount ${node_names[1]}:/home/$mpi_username
+sudo mount ${node_names_array[0]}:/home/$mpi_username
 
 exit
 

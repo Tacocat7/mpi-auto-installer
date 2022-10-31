@@ -85,7 +85,7 @@ function generate_config() {
     sudo echo "mpi_distribution=''" >> $config_file
     sudo echo "setup_complete=0" >> $config_file
     sudo echo "setup_working=0" >> $config_file
-    sudo echo "#EOF" >> $config_file
+    sudo echo "#" >> $config_file
     
     sleep 0.5
     
