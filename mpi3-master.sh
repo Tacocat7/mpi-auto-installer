@@ -330,10 +330,12 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     
     for IP in ${cluster_ips[@]}; do
         if [ "$head_ip" != "$IP" ]; then
-            cat /etc/mpi-config.conf /etc/hosts >> transfer 
+            touch ./backup/transfer
+            cat /etc/mpi-config.conf | sudo tee -a ./backup/transfer
+            cat /etc/hosts| sudo tee -a ./backup/transfer
             echo "DEBUG :: TRANSFER"
-            cat $transfer
-            sudo netcat -w 2 $IP $port < $transfer
+            cat ./backup/transfer
+            sudo netcat -w 2 $IP $port < ./backup/transfer
         fi
     done
     
