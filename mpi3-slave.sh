@@ -81,19 +81,24 @@ else
         PORT=1000
         
     fi
-    
+
+    sudo rm ./backup/transfer
+    touch ./transfer/transfer
     echo "Listening..."
-    sudo netcat -l $PORT
+    sudo netcat -l $PORT | sudo tee -a ./backup/transfer
     
 fi
 
+echo "DEBUG :: TRANSFERRED FILES"
+cat ./backup/transfer
+
 # cat /etc/transfer
 
-if test -f ./transfer; then
+if test -f ./backup/transfer; then
     
     #rm ./backup/hosts > /dev/null
     #move_file /etc/hosts hosts "hosts" /etc/
-    source "./transfer"
+    source "./backup/transfer"
     echo -e "\nSuccessfully copied configuration from MASTER!"
 else 
 
