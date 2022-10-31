@@ -66,7 +66,7 @@ function join_array() {
 
 function check_nfs(){
     
-    $1 $2 $3
+    # $1 $2 $3
     
     A="$(cat $1)"
     
@@ -96,11 +96,7 @@ function check_nfs(){
     
 }
 
-function compare_node(){
-    
-    
-    
-}
+
 
 # Generates an empty config file to /etc/mpi-config,
 # removes and regenerates if it is run with the
@@ -376,7 +372,7 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     echo -e "\nFiles transmitted to nodes!"
     echo -e "\nTesting configuration..."
     
-    check_nfs /etc/mpi-config ${cluster_names[@]} $port
+    check_nfs /etc/mpi-config.conf ${cluster_names[@]} $port
     
     
     #END OF PROGRAM
