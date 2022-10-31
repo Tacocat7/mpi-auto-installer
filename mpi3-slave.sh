@@ -33,14 +33,18 @@ function split_file(){
     touch ./backup/hosts
     
     while read -r line; do
+
+        echo "DEBUG :: $1 $2"
+
         if [ "$delta_split" == "1" ]; then
             
-            echo $line >> hosts
+            
+            echo $line >> ./backup/hosts
             
             elif [ "$line" != "$2" ] && [ "$delta_split" == "0" ]; then
             
-            echo $line >> mpi-config.conf
-            
+            echo $line >> ./backup/mpi-config.conf
+
             elif [ "$line" == "$2" ] && [ "$delta_split" == "0" ]; then
             
             delta_split=1
