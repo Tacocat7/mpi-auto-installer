@@ -151,7 +151,7 @@ echo ${arrIN[@]}
 
 sudo useradd -m "$mpi_username"
 
-sudo mount ${node_names_array[0]}:/home/$mpi_username
+sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username
 
 exit
 
