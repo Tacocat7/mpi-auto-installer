@@ -83,9 +83,9 @@ function check_nfs(){
             B="$(cat /run/node-config.conf)"
             
             
-            if [ "A" == "B" ]; then
+            if [ "$A" == "$B" ]; then
                 
-                echo -e "\nParity for $name achieved!"
+                echo -e "\nParity with $name achieved!"
                 
             else
                 
