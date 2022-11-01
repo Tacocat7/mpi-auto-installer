@@ -79,17 +79,17 @@ function check_nfs(){
         
         if [ "$name" != $HOSTNAME ]; then
             
-            sudo netcat -l $3 > /run/node-config.conf
+            sudo netcat -l $2 > /run/node-config.conf
             B="$(cat /run/node-config.conf)"
             
             
             if [ "A" == "B" ]; then
                 
-                echo "Parity for $name achieved!"
+                echo -e "\nParity for $name achieved!"
                 
             else
                 
-                echo "Files are not the same"
+                echo -e "\nFiles are not the same"
                 echo "DEBUG :: A: $A"
                 echo "DEBUG :: B: $B"
                 

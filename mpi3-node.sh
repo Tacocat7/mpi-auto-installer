@@ -47,6 +47,7 @@ function split_file(){
             elif [ "$line" == "$2" ] && [ "$delta_split" == "0" ]; then
             
             delta_split=1
+            sudo echo "$line" >> ./backup/mpi-config.conf
             
         fi
         
