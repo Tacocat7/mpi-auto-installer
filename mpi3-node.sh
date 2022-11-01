@@ -80,7 +80,7 @@ if [ "$1" == "-ng" ] && [ -n $2 ] && [ -n $3 ]; then
         echo "Error: IP cannot be reached"
         exit
     fi
-        
+    
     PORT=$3
     
 else
@@ -113,7 +113,7 @@ else
         PORT=1000
         
     fi
-        
+    
 fi
 
 transfer_file="./backup/transfer"
@@ -141,7 +141,7 @@ split_file $transfer_file "#"
 # how can we make sure they have parity throughout the execution of the scripts?
 source /etc/mpi-config.conf
 
-# Creates an array with string of node names inside the config file. Must be converted since 
+# Creates an array with string of node names inside the config file. Must be converted since
 # the config can't have arrays for some reason.
 node_names_array=(${node_names//,/ })
 echo "DEBUG :: NODE NAMES: ${node_names_array[@]}"
@@ -156,10 +156,10 @@ echo "Transmitting parity check on port: $PORT "
 sudo netcat -w 2 ${node_names_array[0]} $PORT < "/etc/mpi-config.conf"
 
 # Debug to only write to fstab once
-if ["$(tail -1 /etc/fstab)" != "sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username"];then
-# Edits /etc/fstab file so the nodes mount to the head node at startup
-echo "sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username" | sudo tee -a /etc/fstab
-
+if [ "$(tail -1 /etc/fstab)" != "sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username" ];then
+    # Edits /etc/fstab file so the nodes mount to the head node at startup
+    echo "sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username" | sudo tee -a /etc/fstab
+    
 fi
 
 

@@ -66,11 +66,15 @@ function join_array() {
 
 function check_nfs(){
     
-    echo "DEBUG :: $1 $2 $3"
+    echo "DEBUG :: $1 $2"
+
+    node_names_array=(${node_names//,/ })
+    echo "DEBUG :: NODE NAMES: ${node_names_array[@]}"
+
     
     A="$(cat $1)"
     
-    for name in $2; do
+    for name in "${node_names_array[@]}"; do
         echo "DEBUG :: NAME: $name"
         
         if [ "$name" != $HOSTNAME ]; then
@@ -373,8 +377,10 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     
     echo -e "\nFiles transmitted to nodes!"
     echo -e "\nTesting configuration..."
+
+
     
-    check_nfs /etc/mpi-config.conf ${cluster_names[@]} $port
+    check_nfs /etc/mpi-config.conf $port
     
     
     #END OF PROGRAM
