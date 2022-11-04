@@ -26,6 +26,12 @@ fi
 
 # Generates an empty config file to /etc/mpi-config,
 function generate_config() {
+
+    if [ "$1" == "-r" ]; then
+
+        sudo rm $config_file
+
+    fi
     
     sudo touch $config_file
     
@@ -75,7 +81,7 @@ fi
 source "$config_file"
 
 # Only installs dependencies if config file says so
-if [ "$installed_dependencies" != "1" ]; then
+if [ "$installed_dependencies" == "0" ]; then
     
     sudo apt-get update -y >/dev/null
     
@@ -103,7 +109,6 @@ fi
 if [ ! -d $backup_folder ] || [ "$directory_set" != 1  ]; then
     mkdir $backup_folder
 fi
-
 
 # Function to copy and move a specific file to /backup folder and put
 # another file in its place
@@ -160,6 +165,33 @@ clear
 
 echo -e "Welcome to Pleiades MPI installer version 0.4! \n"
 
+if [ "$input_set" == "1" ] && [ "$setup_complete" == "0" ]; then
+
+    echo "Configuration started but not completed, continue setting up [$cluster_name] or start over? "
+    echo "   1) Continue"
+    echo "   2) Start over"
+    echo "   3) Exit"
+    read -p "Choose from selection[1]: " option
+
+    if [ -z  "$option" ]; then
+
+        option="1"
+
+    elif [ "$option" == "3" ]; then
+
+        exit
+
+    elif [ "$option" == "2" ]; then
+
+        generate_config -r
+        source $config_file
+
+    fi
+
+fi
+
+# If there is data written in the variables that are set in the below loop
+# AND $input_set is not equal to 1, then the program assumes the data is junk
 while [ "$input_set" != "1" ]; do
     
     # Sets master in config file
@@ -181,7 +213,6 @@ while [ "$input_set" != "1" ]; do
         read -p "How many nodes would you like to connect?: " number_of_nodes
         
     done
-    
     
     
     # Sets config file variable
@@ -259,7 +290,12 @@ while [ "$input_set" != "1" ]; do
         
 done
 echo "Step 1: Complete!"
+
+#   if [ "$input_set" == "1" ] && [ "$changed_hosts" == ]
+
 exit
+
+# BELOW IS UNTESTED
 
 DONE=false
 
