@@ -13,24 +13,26 @@ head_ip=$( ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]
 cluster_names=()
 cluster_ips=()
 
-# Checks for debug arguments
+# Checks for debug arguments if the argument is -r then it only regenerates config file,
+# if the argument is -d then it also deletes the backup folder
 if [ "$1" == "-r" ] || [ "$1" == "-d" ]; then
     
     sudo rm $config_file
     
-    elif [ "$1" == "-d" ]; then
+    if [ "$1" == "-d" ]; then
+
+        sudo rm -r $backup_folder
     
-    sudo rm -r $backup_folder
-    
+    fi
 fi
 
 # Generates an empty config file to /etc/mpi-config,
 function generate_config() {
-
+    
     if [ "$1" == "-r" ]; then
-
+        
         sudo rm $config_file
-
+        
     fi
     
     sudo touch $config_file
@@ -106,8 +108,9 @@ fi
 
 
 # Creates a backup folder for all files being replaced
-if [ ! -d $backup_folder ] || [ "$directory_set" != 1  ]; then
+if [ ! -d $backup_folder ] && [ "$directory_set" != 1  ]; then
     mkdir $backup_folder
+    write_config directory_set "1"
 fi
 
 # Function to copy and move a specific file to /backup folder and put
@@ -165,38 +168,41 @@ clear
 
 echo -e "Welcome to Pleiades MPI installer version 0.4! \n"
 
+# Checks the config file to see if the user has completed any steps, if it has AND the config file
+# has not marked off the completion of the process, THEN the user is prompted to choose whether
+# to go back where they left off, OR start over with a new config file.
 if [ "$input_set" == "1" ] && [ "$setup_complete" == "0" ]; then
-
+    
     echo "Configuration started but not completed, continue setting up [$cluster_name] or start over? "
     echo "   1) Continue"
     echo "   2) Start over"
     echo "   3) Exit"
     read -p "Choose from selection[1]: " option
-
+    
     if [ -z  "$option" ]; then
-
+        
         option="1"
-
-    elif [ "$option" == "3" ]; then
-
+        
+        elif [ "$option" == "3" ]; then
+        
         exit
-
-    elif [ "$option" == "2" ]; then
-
+        
+        elif [ "$option" == "2" ]; then
+        
         generate_config -r
         source $config_file
-
+        
     fi
-
+    
 fi
 
 # If there is data written in the variables that are set in the below loop
 # AND $input_set is not equal to 1, then the program assumes the data is junk
-while [ "$input_set" != "1" ]; do
+while [ "$input_set" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     # Sets master in config file
     write_config master $HOSTNAME
-
+    
     # User inputs name for cluster
     read -p "Enter a name for your cluster: " name
     write_config cluster_name $name
@@ -218,7 +224,7 @@ while [ "$input_set" != "1" ]; do
     # Sets config file variable
     write_config cluster_size $number_of_nodes
     source "$config_file"
-
+    
     # IP address user input loop, only as many as the user specified
     for ((i=1; i<=$number_of_nodes; i++))
     do
@@ -285,28 +291,39 @@ while [ "$input_set" != "1" ]; do
     write_config node_ips "${node_ips_string:1}"
     node_names_string=$(join_array  ,"${cluster_names[@]}")
     write_config node_names "${node_names_string:1}"
-
+    
     write_config input_set "1"
-        
+    
 done
+
 echo "Step 1: Complete!"
-
-#   if [ "$input_set" == "1" ] && [ "$changed_hosts" == ]
-
-exit
 
 # BELOW IS UNTESTED
 
-DONE=false
-
-# Input loop, only runs if the config says so
-while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
+# Hosts loop, only runs if the config says so
+while [ "$changed_hosts" != "1" ] && [ "$setup_complete" != "1" ]; do
     
+    # If a hosts file exists in the relative directory, but the hosts file has not
+    # been changed, then delete it
+    if [ -f "./hosts" ]; then
+        
+        sudo rm hosts
+        
+        elif [ -f "./backup/hosts" ]; then
+        
+        sudo rm ./backup/hosts
+        
+        elif [ -f "/etc/hosts" ]; then
+        
+        sudo cp /etc/hosts ./backup/hosts
+        sudo rm /etc/hosts
+        
+    fi
     
     # Generates a hosts file
-    hosts_file="hosts"
+    hosts_file="./hosts"
     touch $hosts_file
-    echo -e "\n127.0.0.1 \t localhost" >> $hosts_file
+    echo -e "127.0.0.1 \t localhost" >> $hosts_file
     
     for index in ${!cluster_names[*]}; do
         echo -e "${cluster_ips[$index]} \t ${cluster_names[$index]}" >> $hosts_file
@@ -319,140 +336,139 @@ while [ "$DONE" = false ] && [ "$setup_complete" = "0" ]; do
     echo "ff02::1 ip6-allnodes" >> $hosts_file
     echo "ff02::2 ip6-allrouters" >> $hosts_file
     
-    move_file /etc/hosts hosts $hosts_file /etc/
-    sudo sed -i "1s/^/$(date '+%Y-%m-%d,%H:%M:%S')\n/" ./backup/hosts
-    echo -e "/etc/hosts file generated and updated! A backup was copied to the backup folder \n"
     
-    set_config changed_hosts 1
-    
-    # FOR DEBUG
-    sudo cp $config_file ./backup/
-    
-    mpi_user="mpiuser"
-    
-    echo -e "Which profile name would you like to use for your mpi user? "
-    echo -e "   1) $mpi_user \n   2) $cluster_name \n   3) Other"
-    
-    read -p "Profile name[1]: " user_selection
-    
-    
-    if [ "$user_selection" == "2" ]; then
-        
-        set_config mpi_username $cluster_name
-        # echo "Set username to $cluster_name"
-        
-        elif [ "$user_selection" == "3" ]; then
-        
-        read -p "Enter your preferred mpi profile name: " user_name
-        
-        
-        while [ -z "$user_name" ]; do
-            
-            echo "Error cannot be empty"
-            read -p "Enter your preferred mpi profile name, no spaces: " user_name
-            
-        done
-        
-        while [[ "$user_name" =~ " " ]]; do
-            
-            echo "Error cannot have spaces"
-            read -p "Enter your preferred mpi profile name, no spaces: " user_name
-            
-        done
-        
-        set_config mpi_username $user_name
-        
-    else
-        
-        set_config mpi_username $mpi_user
-        
-    fi
-    
-    read -s -p "Enter a password for your user: " user_password
-    echo
-    sudo useradd -m "$mpi_username"
-    echo "$mpi_username:$user_password" | sudo chpasswd
-    
-    set_config user_set 1
-    
-    
-    filename="exports"
-    touch $filename
-    
-    # Generates an exports file and replaces it with the default one
-    for IP in ${cluster_ips[@]}; do
-        if [ "$head_ip" != "$IP" ]; then
-            sudo echo "/home/$mpi_username $IP(rw,sync,no_subtree_check)" >> $filename
-        fi
-    done
-    
-    move_file /etc/exports exports $filename /etc/
-    
-    echo -e "Moved exports file to backup! \n"
-    echo -e "Restarting Service... \n"
-    sudo service nfs-kernel-server restart
-    sleep 0.2
-    echo -e "Done!\n"
-    echo -e "NFS server for $HOSTNAME has been set up! \n"
-    
-    
-    # Port to transmit netcat data
-    read -p "Enter the port to send NODE data to [1000]: " port
-    if [ -z $port ]; then
-        port="1000"
-    fi
-    
-    echo -e "\nTransmitting packets from $head_ip on port $port"
-    read -p "Run slave installer with \$(sudo mpi3 $head_ip $port) now, and then continue..."
-    
-    # sudo apt-get install netcat
-    
-    sudo rm ./backup/transfer
-    touch ./backup/transfer
-    cat /etc/mpi-config.conf | sudo tee -a ./backup/transfer
-    cat /etc/hosts| sudo tee -a ./backup/transfer
-    
-    for IP in ${cluster_ips[@]}; do
-        if [ "$head_ip" != "$IP" ]; then
-            sudo netcat -w 2 $IP $port < "./backup/transfer"
-        fi
-    done
-    
-    echo -e "\nFiles transmitted to nodes!"
-    echo -e "\nTesting configuration..."
-    
-    
-    
-    # check_nfs /etc/mpi-config.conf $port
-    
-    
-    #END OF PROGRAM
-    
-    if [ "$1" == "-d" ]; then
-        
-        cat /etc/hosts
-        echo
-        cat $config_file
-        sudo rm -r ./backup
-        echo
-        echo "Script terminated"
-        
-        sudo deluser --remove-home $mpi_username
-        
-        if [ "$master" == "1" ]; then
-            sudo apt-get purge nfs-kernel-server
-            echo
-        else
-            
-            #sudo apt-get purge nfs-common
-            echo "Didnt purge"
-            
-        fi
-        
-        
-    fi
-    
-    exit 0
-    
+    sudo mv $hosts_file /etc/hosts
+    hosts_file="/etc/hosts"
+    echo -e "/etc/hosts file generated and updated! A backup was copied to the backup folder. \n"
+    write_config changed_hosts "1"
+    source $config_file
     
 done
+
+echo "Step 2: Complete!"
+
+mpi_user="mpiuser"
+
+echo -e "Which profile name would you like to use for your mpi user? "
+echo -e "   1) $mpi_user \n   2) $cluster_name \n   3) Other"
+
+read -p "Profile name[1]: " user_selection
+
+
+if [ "$user_selection" == "2" ]; then
+    
+    write_config mpi_username $cluster_name
+    # echo "Set username to $cluster_name"
+    
+    elif [ "$user_selection" == "3" ]; then
+    
+    read -p "Enter your preferred mpi profile name: " user_name
+    
+    
+    while [ -z "$user_name" ]; do
+        
+        echo "Error cannot be empty"
+        read -p "Enter your preferred mpi profile name, no spaces: " user_name
+        
+    done
+    
+    while [[ "$user_name" =~ " " ]]; do
+        
+        echo "Error cannot have spaces"
+        read -p "Enter your preferred mpi profile name, no spaces: " user_name
+        
+    done
+    
+    write_config mpi_username $user_name
+    
+else
+    
+    write_config mpi_username $mpi_user
+    
+fi
+
+read -s -p "Enter a password for your user: " user_password
+echo
+sudo useradd -m "$mpi_username"
+echo "$mpi_username:$user_password" | sudo chpasswd
+
+write_config user_set 1
+
+
+filename="exports"
+touch $filename
+
+# Generates an exports file and replaces it with the default one
+for IP in ${cluster_ips[@]}; do
+    if [ "$head_ip" != "$IP" ]; then
+        sudo echo "/home/$mpi_username $IP(rw,sync,no_subtree_check)" >> $filename
+    fi
+done
+
+move_file /etc/exports exports $filename /etc/
+
+echo -e "Moved exports file to backup! \n"
+echo -e "Restarting Service... \n"
+sudo service nfs-kernel-server restart
+sleep 0.2
+echo -e "Done!\n"
+echo -e "NFS server for $HOSTNAME has been set up! \n"
+
+
+# Port to transmit netcat data
+read -p "Enter the port to send NODE data to [1000]: " port
+if [ -z $port ]; then
+    port="1000"
+fi
+
+echo -e "\nTransmitting packets from $head_ip on port $port"
+read -p "Run slave installer with \$(sudo mpi3 $head_ip $port) now, and then continue..."
+
+# sudo apt-get install netcat
+
+sudo rm ./backup/transfer
+touch ./backup/transfer
+cat /etc/mpi-config.conf | sudo tee -a ./backup/transfer
+cat /etc/hosts| sudo tee -a ./backup/transfer
+
+for IP in ${cluster_ips[@]}; do
+    if [ "$head_ip" != "$IP" ]; then
+        sudo netcat -w 2 $IP $port < "./backup/transfer"
+    fi
+done
+
+echo -e "\nFiles transmitted to nodes!"
+echo -e "\nTesting configuration..."
+
+
+
+# check_nfs /etc/mpi-config.conf $port
+
+
+#END OF PROGRAM
+
+if [ "$1" == "-d" ]; then
+    
+    cat /etc/hosts
+    echo
+    cat $config_file
+    sudo rm -r ./backup
+    echo
+    echo "Script terminated"
+    
+    sudo deluser --remove-home $mpi_username
+    
+    if [ "$master" == "1" ]; then
+        sudo apt-get purge nfs-kernel-server
+        echo
+    else
+        
+        #sudo apt-get purge nfs-common
+        echo "Didnt purge"
+        
+    fi
+    
+    
+fi
+
+exit 0
