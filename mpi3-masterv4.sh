@@ -325,10 +325,12 @@ while [ "$changed_hosts" != "1" ] && [ "$setup_complete" != "1" ]; do
     echo "ff02::1 ip6-allnodes" >> $hosts_file
     echo "ff02::2 ip6-allrouters" >> $hosts_file
     
-    
     sudo mv $hosts_file /etc/hosts
     hosts_file="/etc/hosts"
+    datetime="$(date '+%Y-%m-%d %H:%M:%S')"
+    sudo sed -i "1s/^/Backup of hosts file created on $datetime\n/" ./backup/hosts
     echo -e "/etc/hosts file generated and updated! A backup was copied to the backup folder. \n"
+
     write_config changed_hosts "1"
     
 done
@@ -419,7 +421,8 @@ while [ "$changed_exports" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     sudo mv /etc/exports ./backup/exports
     sudo mv $filename /etc/
-    
+    datetime="$(date '+%Y-%m-%d %H:%M:%S')"
+    sudo sed -i "1s/^/Backup of hosts file created on $datetime\n/" ./backup/exports
     echo -e "Moved exports file to backup! \n"
     
     write_config changed_exports "1"
