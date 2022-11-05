@@ -18,11 +18,12 @@ cluster_ips=()
 if [ "$1" == "-r" ] || [ "$1" == "-d" ]; then
     
     sudo rm $config_file
+    sudo deluser --remove-home $2 > /dev/null
     
     if [ "$1" == "-d" ]; then
-
+        
         sudo rm -r $backup_folder
-    
+        
     fi
 fi
 
@@ -63,6 +64,8 @@ function generate_config() {
     
     sleep 0.5
     
+    source $config_file
+    
     echo -e "Empty config file generated! \n"
 }
 
@@ -84,7 +87,7 @@ source "$config_file"
 
 # Only installs dependencies if config file says so
 if [ "$installed_dependencies" == "0" ]; then
-    
+    echo -e "Updating apt..."
     sudo apt-get update -y >/dev/null
     
     # Checks if netcat and nfs-kernel-server is installed, if not it installs is
@@ -112,13 +115,6 @@ if [ ! -d $backup_folder ] && [ "$directory_set" != 1  ]; then
     mkdir $backup_folder
     write_config directory_set "1"
 fi
-
-# Function to copy and move a specific file to /backup folder and put
-# another file in its place
-function move_file(){
-    sudo mv $1 ./backup/$2
-    sudo mv $3 $4
-}
 
 # Function to join an array into one string
 function join_array() {
@@ -171,7 +167,7 @@ echo -e "Welcome to Pleiades MPI installer version 0.4! \n"
 # Checks the config file to see if the user has completed any steps, if it has AND the config file
 # has not marked off the completion of the process, THEN the user is prompted to choose whether
 # to go back where they left off, OR start over with a new config file.
-if [ "$input_set" == "1" ] && [ "$setup_complete" == "0" ]; then
+if [ "$input_set" == "1" ] && [ "$setup_complete" != "1" ]; then
     
     echo "Configuration started but not completed, continue setting up [$cluster_name] or start over? "
     echo "   1) Continue"
@@ -190,7 +186,6 @@ if [ "$input_set" == "1" ] && [ "$setup_complete" == "0" ]; then
         elif [ "$option" == "2" ]; then
         
         generate_config -r
-        source $config_file
         
     fi
     
@@ -207,7 +202,6 @@ while [ "$input_set" != "1" ] && [ "$setup_complete" != "1" ]; do
     read -p "Enter a name for your cluster: " name
     write_config cluster_name $name
     
-    
     read -p "How many nodes would you like to connect?: " number_of_nodes
     echo
     
@@ -223,7 +217,6 @@ while [ "$input_set" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     # Sets config file variable
     write_config cluster_size $number_of_nodes
-    source "$config_file"
     
     # IP address user input loop, only as many as the user specified
     for ((i=1; i<=$number_of_nodes; i++))
@@ -296,10 +289,6 @@ while [ "$input_set" != "1" ] && [ "$setup_complete" != "1" ]; do
     
 done
 
-echo "Step 1: Complete!"
-
-# BELOW IS UNTESTED
-
 # Hosts loop, only runs if the config says so
 while [ "$changed_hosts" != "1" ] && [ "$setup_complete" != "1" ]; do
     
@@ -341,79 +330,107 @@ while [ "$changed_hosts" != "1" ] && [ "$setup_complete" != "1" ]; do
     hosts_file="/etc/hosts"
     echo -e "/etc/hosts file generated and updated! A backup was copied to the backup folder. \n"
     write_config changed_hosts "1"
-    source $config_file
     
 done
 
-echo "Step 2: Complete!"
-
-mpi_user="mpiuser"
-
-echo -e "Which profile name would you like to use for your mpi user? "
-echo -e "   1) $mpi_user \n   2) $cluster_name \n   3) Other"
-
-read -p "Profile name[1]: " user_selection
-
-
-if [ "$user_selection" == "2" ]; then
+# MPI user creation loop
+while [ "$user_created" != "1" ] && [ "$setup_complete" != "1" ]; do
     
-    write_config mpi_username $cluster_name
-    # echo "Set username to $cluster_name"
+    echo -e "Which profile name would you like to use for your mpi user? "
+    echo -e "   1) mpiuser \n   2) $cluster_name \n   3) Other"
     
-    elif [ "$user_selection" == "3" ]; then
+    read -p "Profile name selection[1]: " selection
+    echo
     
-    read -p "Enter your preferred mpi profile name: " user_name
-    
-    
-    while [ -z "$user_name" ]; do
+    if [ -z "$selection" ]; then
         
-        echo "Error cannot be empty"
-        read -p "Enter your preferred mpi profile name, no spaces: " user_name
+        if [ ! -d "/home/mpiuser" ]; then
+            write_config mpi_username "mpiuser"
+            
+        else
+            
+            echo "Error, user already exists. Enter a different name"
+            selection="3"
+        fi
         
-    done
-    
-    while [[ "$user_name" =~ " " ]]; do
+        elif [ "$selection" == "2" ]; then
         
-        echo "Error cannot have spaces"
-        read -p "Enter your preferred mpi profile name, no spaces: " user_name
+        write_config mpi_username $cluster_name
         
-    done
-    
-    write_config mpi_username $user_name
-    
-else
-    
-    write_config mpi_username $mpi_user
-    
-fi
-
-read -s -p "Enter a password for your user: " user_password
-echo
-sudo useradd -m "$mpi_username"
-echo "$mpi_username:$user_password" | sudo chpasswd
-
-write_config user_set 1
-
-
-filename="exports"
-touch $filename
-
-# Generates an exports file and replaces it with the default one
-for IP in ${cluster_ips[@]}; do
-    if [ "$head_ip" != "$IP" ]; then
-        sudo echo "/home/$mpi_username $IP(rw,sync,no_subtree_check)" >> $filename
     fi
+    
+    if [ "$selection" == "3" ]; then
+        
+        read -p "Enter your preferred mpi profile name: " user_name
+        while [ -z "$user_name" ]; do
+            
+            echo "Error cannot be empty"
+            read -p "Enter your preferred mpi profile name, no spaces: " user_name
+            
+        done
+        
+        while [[ "$user_name" =~ " " ]]; do
+            
+            echo "Error cannot have spaces"
+            read -p "Enter your preferred mpi profile name, no spaces: " user_name
+            
+        done
+        
+        while [ -d "$user_name" ]; do
+            
+            echo "Error, user already exists on this machine"
+            read -p "Enter your preferred mpi profile name, no spaces: " user_name
+            
+        done
+        
+        write_config mpi_username $user_name
+    fi
+    
+    read -s -p "Enter a password for your user: " user_password
+    
+    while [ -z $user_password ]; do
+        
+        echo -e "\nError, password for $mpi_username cannot be empty!"
+        read -s -p "Enter a password for your user: " user_password
+        
+    done
+    
+    sudo useradd -m "$mpi_username"
+    echo "$mpi_username:$user_password" | sudo chpasswd
+    
+    echo -e "\nUser [$mpi_username] created!"
+    
+    write_config user_created "1"
+    
 done
 
-move_file /etc/exports exports $filename /etc/
-
-echo -e "Moved exports file to backup! \n"
-echo -e "Restarting Service... \n"
-sudo service nfs-kernel-server restart
-sleep 0.2
-echo -e "Done!\n"
-echo -e "NFS server for $HOSTNAME has been set up! \n"
-
+# Changes exports file, only if the config file says so
+while [ "$changed_exports" != "1" ] && [ "$setup_complete" != "1" ]; do
+    
+    filename="exports"
+    touch $filename
+    
+    # Generates an exports file and replaces it with the default one
+    for IP in ${cluster_ips[@]}; do
+        if [ "$head_ip" != "$IP" ]; then
+            sudo echo "/home/$mpi_username $IP(rw,sync,no_subtree_check)" >> $filename
+        fi
+    done
+    
+    sudo mv /etc/exports ./backup/exports
+    sudo mv $filename /etc/
+    
+    echo -e "Moved exports file to backup! \n"
+    
+    write_config changed_exports "1"
+    
+    echo -e "\nRestarting Service..."
+    sudo service nfs-kernel-server restart
+    sleep 0.2
+    echo -e "Done!\n"
+    echo -e "NFS server for $HOSTNAME has been set up! \n"
+    
+done
 
 # Port to transmit netcat data
 read -p "Enter the port to send NODE data to [1000]: " port
@@ -440,35 +457,7 @@ done
 echo -e "\nFiles transmitted to nodes!"
 echo -e "\nTesting configuration..."
 
-
-
 # check_nfs /etc/mpi-config.conf $port
 
-
-#END OF PROGRAM
-
-if [ "$1" == "-d" ]; then
-    
-    cat /etc/hosts
-    echo
-    cat $config_file
-    sudo rm -r ./backup
-    echo
-    echo "Script terminated"
-    
-    sudo deluser --remove-home $mpi_username
-    
-    if [ "$master" == "1" ]; then
-        sudo apt-get purge nfs-kernel-server
-        echo
-    else
-        
-        #sudo apt-get purge nfs-common
-        echo "Didnt purge"
-        
-    fi
-    
-    
-fi
-
 exit 0
+#EOF
