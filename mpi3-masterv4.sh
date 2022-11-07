@@ -9,6 +9,7 @@ fi
 version="0.4"
 config_file="/etc/mpi-config.conf"
 backup_folder="./backup"
+transfer_file="./backup/transfer"
 head_ip=$( ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}' )
 cluster_names=()
 cluster_ips=()
@@ -19,6 +20,7 @@ if [ "$1" == "-r" ] || [ "$1" == "-d" ]; then
     
     sudo rm $config_file
     sudo deluser --remove-home $2 > /dev/null
+    sudo rm $transfer_file
     
     if [ "$1" == "-d" ]; then
         
@@ -58,6 +60,7 @@ function generate_config() {
     sudo echo "changed_hosts=0" >> $config_file
     sudo echo "changed_exports=0" >> $config_file
     sudo echo "directory_set=0" >> $config_file
+    sudo echo "default_port=1000" >> $config_file
     sudo echo "setup_complete=0" >> $config_file
     sudo echo "setup_working=0" >> $config_file
     sudo echo "#" >> $config_file
@@ -115,6 +118,20 @@ if [ ! -d $backup_folder ] && [ "$directory_set" != 1  ]; then
     mkdir $backup_folder
     write_config directory_set "1"
 fi
+
+function countdown_sec() {
+    
+    
+    sec=$1
+    
+    while [ $sec -ge 0 ]; do
+        echo -ne "Timeout: $sec seconds \033[0K\r"
+        let "sec=sec-1"
+        sleep 1
+    done
+    sec=59
+    
+}
 
 # Function to join an array into one string
 function join_array() {
@@ -330,8 +347,10 @@ while [ "$changed_hosts" != "1" ] && [ "$setup_complete" != "1" ]; do
     datetime="$(date '+%Y-%m-%d %H:%M:%S')"
     sudo sed -i "1s/^/Backup of hosts file created on $datetime\n/" ./backup/hosts
     echo -e "/etc/hosts file generated and updated! A backup was copied to the backup folder. \n"
-
+    
     write_config changed_hosts "1"
+    hosts_file="/etc/hosts"
+    echo $hosts_file
     
 done
 
@@ -342,7 +361,6 @@ while [ "$user_created" != "1" ] && [ "$setup_complete" != "1" ]; do
     echo -e "   1) mpiuser \n   2) $cluster_name \n   3) Other"
     
     read -p "Profile name selection[1]: " selection
-    echo
     
     if [ -z "$selection" ]; then
         
@@ -421,6 +439,7 @@ while [ "$changed_exports" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     sudo mv /etc/exports ./backup/exports
     sudo mv $filename /etc/
+    
     datetime="$(date '+%Y-%m-%d %H:%M:%S')"
     sudo sed -i "1s/^/Backup of hosts file created on $datetime\n/" ./backup/exports
     echo -e "Moved exports file to backup! \n"
@@ -435,32 +454,44 @@ while [ "$changed_exports" != "1" ] && [ "$setup_complete" != "1" ]; do
     
 done
 
-# Port to transmit netcat data
-read -p "Enter the port to send NODE data to [1000]: " port
-if [ -z $port ]; then
-    port="1000"
-fi
-
-echo -e "\nTransmitting packets from $head_ip on port $port"
-read -p "Run slave installer with \$(sudo mpi3 $head_ip $port) now, and then continue..."
-
-# sudo apt-get install netcat
-
-sudo rm ./backup/transfer
-touch ./backup/transfer
-cat /etc/mpi-config.conf | sudo tee -a ./backup/transfer
-cat /etc/hosts| sudo tee -a ./backup/transfer
-
-for IP in ${cluster_ips[@]}; do
-    if [ "$head_ip" != "$IP" ]; then
-        sudo netcat -w 2 $IP $port < "./backup/transfer"
+while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
+    # Port to transmit netcat data
+    read -p "Enter the port to send transfer data to [1000]: " port
+    if [ -z $port ]; then
+        port="1000"
+    else
+        
+        read -p "Keep this port [$port] as the default for node networking?[y/n]: " option
+        if [ "$option" != "n" ]; then
+            write_config default_port $port
+        fi 
+        
     fi
+    
+    read -p "Run slave installer with \$(sudo mpi3 -ng $head_ip $port) NOW, before continuing..."
+    echo -e "\nTransmitting packets from $head_ip on port $port"
+
+    if test -f "$transfer_file"; then
+        sudo rm $transfer_file
+    fi
+
+    touch $transfer_file
+    cat $config_file | sudo tee -a $transfer_file >/dev/null
+    cat /etc/hosts | sudo tee -a $transfer_file >/dev/null
+    
+    transmit_time=2
+    
+    for IP in ${cluster_ips[@]}; do
+        if [ "$head_ip" != "$IP" ]; then
+            sudo netcat -w $transmit_time $IP $port < "./backup/transfer"
+        fi
+    done
+    
+    echo -e "\nFiles transmitted"
+    echo -e "\nWaiting for node confirmation..."
+    # WAIT FOR EACH NODE CONFIRMATION
+
 done
-
-echo -e "\nFiles transmitted to nodes!"
-echo -e "\nTesting configuration..."
-
-# check_nfs /etc/mpi-config.conf $port
 
 exit 0
 #EOF
