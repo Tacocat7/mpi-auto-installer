@@ -261,7 +261,7 @@ else
     
 fi
 
-while [ ! -f $transfer_file ]; then
+while [ ! -f $transfer_file ]; do
     
     echo "No transmission from port $port, retrying..."
     if [ "$1" == "-ng" ]; then
@@ -277,7 +277,7 @@ while [ ! -f $transfer_file ]; then
     exit 2
     
     
-fi
+done
 
 if [ -f $transfer_file ]; then
     

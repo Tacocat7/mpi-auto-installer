@@ -422,7 +422,7 @@ while [ "$user_created" != "1" ] && [ "$setup_complete" != "1" ]; do
         
     done
     
-    sudo useradd -m "$mpi_username" --uid 45
+    sudo useradd -m "$mpi_username" -s /bin/bash --uid 45
     echo "$mpi_username:$user_password" | sudo chpasswd
     
     echo -e "\nUser [$mpi_username] created!"
