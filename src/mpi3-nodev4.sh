@@ -331,7 +331,7 @@ sleeptime=$(( 1*$N ))
 echo "Sleeping for $sleeptime"
 sleep $sleeptime
 
-sudo useradd -m "$mpi_username" --uid 45
+sudo useradd -m "$mpi_username" -s /bin/bash 
 # Needs a password to be set!!!
 
 if [ -d /home/$mpi_username ]; then
