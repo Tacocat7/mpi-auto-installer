@@ -88,6 +88,7 @@ function generate_config() {
     sudo echo "changed_hosts=1" >> $config_file
     sudo echo "directory_set=1" >> $config_file
     sudo echo "default_port=$port" >> $config_file
+    sudo echo "N=" >> $config_files
     sudo echo "#" >> $config_file
     
     sleep 0.5
@@ -294,16 +295,22 @@ echo "DEBUG :: NODE NAMES: ${node_names_array[@]}"
 
 n=0
 
-for name in (${node_names_array[#]}); do
+for name in ${node_names_array[@]}; do
 
-    n="$((n+1))"
 
     if [ "$name" == "$HOSTNAME" ]; then
 
-        echo "THIS IS NODE $n"
-
-
+        write_config N $n
 
     fi
 
+
+    n="$((n+1))"
+
 done
+
+
+sleeptime=$(( 1*$N ))
+
+echo "Sleeping for $sleeptime"
+sleep $sleeptime
