@@ -210,11 +210,12 @@ fi
 
 transfer_file="../tmp/transfer"
 
-if [ $1 == "-ng" ]; then
+if [ "$1" == "-ng" ]; then
+    echo "DEBUG :: $1 $2 $3"
     listen $2 $3 $transfer_file
     
 else
-    
+    echo "DEBUG :: $IP $port $transfer_file"
     listen $IP $port $transfer_file
     
 fi
