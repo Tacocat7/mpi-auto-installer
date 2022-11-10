@@ -12,7 +12,7 @@ hosts_file="../tmp/hosts"
 backup_folder="../backup/"
 tmp_folder="../tmp/"
 etc_folder="../etc/"
-head_ip=$( ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}' )
+node_ip=$( ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}' )
 cluster_names=()
 cluster_ips=()
 
@@ -47,15 +47,22 @@ if [ ! -d $etc_folder ]; then
     mkdir $backup_folder
     
 else
-    
+    # Reset directories for debugging
     sudo rm -r $tmp_folder
     mkdir $tmp_folder
+    sudo rm -r $etc_folder
+    mkdir $etc_folder
+    sudo rm -r $backup_folder
+    mkdir $backup_folder
     
 fi
 
 # Generates an empty config file to /etc/mpi-config, if run with -r paramter it removes
 # the config file and generates a new one
 function generate_config() {
+
+    source "../etc/master.conf"
+
     
     if [ "$1" == "-r" ]; then
         
@@ -66,21 +73,21 @@ function generate_config() {
     sudo touch $config_file
     
     sudo echo "version=0.4" >> $config_file
-    sudo echo "installed_dependencies=1"  >> $config_file
+    sudo echo "installed_dependencies=1" >> $config_file
     sudo echo "cluster_name=$cluster_name"  >> $config_file
-    sudo echo "cluster_size=" >> $config_file
-    sudo echo "master=''" >> $config_file
-    sudo echo "mpi_username=''" >> $config_file
-    sudo echo "mpi_password=''" >> $config_file
-    sudo echo "node_name=''" >> $config_file
-    sudo echo "node_ip=''" >> $config_file
+    sudo echo "cluster_size=$cluster_size" >> $config_file
+    sudo echo "master=$master" >> $config_file
+    sudo echo "mpi_username=$mpi_username" >> $config_file
+    sudo echo "mpi_password=$mpi_password" >> $config_file
+    sudo echo "node_name=$HOSTNAME" >> $config_file
+    sudo echo "node_ip=$node_ip" >> $config_file
     sudo echo "user_created=0" >> $config_file
     sudo echo "nfs_mounted=0" >> $config_file
     sudo echo "ssh_secured=0" >> $config_file
     sudo echo "changed_fstab=0" >> $config_file
-    sudo echo "changed_hosts=0" >> $config_file
-    sudo echo "directory_set=0" >> $config_file
-    sudo echo "default_port=1000" >> $config_file
+    sudo echo "changed_hosts=1" >> $config_file
+    sudo echo "directory_set=1" >> $config_file
+    sudo echo "default_port=$port" >> $config_file
     sudo echo "#" >> $config_file
     
     sleep 0.5
@@ -162,9 +169,10 @@ function split_file(){
         sudo mv /etc/hosts $backup_folder
     fi
     
-    sudo mv $hosts /etc/
+    sudo mv $hosts /etc/hosts
     sudo mv $master_config $etc_folder
     hosts_file="/etc/hosts"
+    master_config="../etc/master.conf"
     
 }
 
@@ -176,7 +184,7 @@ if [ -f $config_file ]; then
     source "$config_file"
 fi
 
-if [ -d $etc_folder ] && [ -d $backup_folder ] && [ -d $tmp_folder ] && test -f $config_file; then
+if [ -d $etc_folder ] && [ -d $backup_folder ] && [ -d $tmp_folder ]; then
     
     echo "Directory made"
     
@@ -267,9 +275,10 @@ fi
 # Splits the transferred file, and moves the new files to /etc/mpi-config-conf and /etc/hosts
 split_file $transfer_file "#"
 
-source $master_config
+hosts_file="/etc/hosts"
+master_config="../etc/master.conf"
 
-echo $mpi_username
+
 
 # Generates node config from master config
 if [ ! -f "$config_file" ]; then
@@ -277,3 +286,24 @@ if [ ! -f "$config_file" ]; then
     sleep 0.5
     generate_config
 fi
+
+source "../etc/mpi-node.conf"
+
+node_names_array=(${node_names//,/ })
+echo "DEBUG :: NODE NAMES: ${node_names_array[@]}"
+
+n=0
+
+for name in (${node_names_array[#]}); do
+
+    n="$((n+1))"
+
+    if [ "$name" == "$HOSTNAME" ]; then
+
+        echo "THIS IS NODE $n"
+
+
+
+    fi
+
+done
