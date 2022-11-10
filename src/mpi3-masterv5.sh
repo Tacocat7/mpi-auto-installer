@@ -494,7 +494,7 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     cat $config_file | sudo tee -a $transfer_file >/dev/null
     cat /etc/hosts | sudo tee -a $transfer_file >/dev/null
     
-    transmit_time=4
+    transmit_time=1
 
     cluster_ips=(${node_ips//,/ })
 
