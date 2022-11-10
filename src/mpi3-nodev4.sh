@@ -88,7 +88,7 @@ function generate_config() {
     sudo echo "changed_hosts=1" >> $config_file
     sudo echo "directory_set=1" >> $config_file
     sudo echo "default_port=$port" >> $config_file
-    sudo echo "N=" >> $config_files
+    sudo echo "N=" >> $config_file
     sudo echo "#" >> $config_file
     
     sleep 0.5
@@ -314,3 +314,15 @@ sleeptime=$(( 1*$N ))
 
 echo "Sleeping for $sleeptime"
 sleep $sleeptime
+
+sudo useradd -m "$mpi_username"
+# Needs a password to be set!!!
+
+if [ -d /home/$mpi_username ]; then
+
+    echo "DEBUG :: -d"
+    sudo mount $master:/home/$mpi_username /home/$mpi_username
+
+fi
+
+sudo mount $master:/home/$mpi_username /home/$mpi_username
