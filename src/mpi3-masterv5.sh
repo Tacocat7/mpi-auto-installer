@@ -422,7 +422,7 @@ while [ "$user_created" != "1" ] && [ "$setup_complete" != "1" ]; do
         
     done
     
-    sudo useradd -m "$mpi_username"
+    sudo useradd -m "$mpi_username" --uid 45
     echo "$mpi_username:$user_password" | sudo chpasswd
     
     echo -e "\nUser [$mpi_username] created!"
@@ -508,6 +508,8 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     echo -e "\nFiles transmitted"
     echo -e "\nWaiting for node confirmation..."
     # WAIT FOR EACH NODE CONFIRMATION
+
+
     
     # The main loop MUST run ONCE or else weird stuff happens
     exit

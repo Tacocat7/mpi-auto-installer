@@ -269,7 +269,6 @@ source /etc/mpi-config.conf
 # Creates an array with string of node names inside the config file. Must be converted since
 # the config can't have arrays for some reason.
 node_names_array=(${node_names//,/ })
-echo "DEBUG :: NODE NAMES: ${node_names_array[@]}"
 
 sudo useradd -m "$mpi_username"
 # Needs a password to be set!!!
