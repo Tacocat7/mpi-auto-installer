@@ -60,9 +60,9 @@ fi
 # Generates an empty config file to /etc/mpi-config, if run with -r paramter it removes
 # the config file and generates a new one
 function generate_config() {
-
+    
     source "../etc/master.conf"
-
+    
     
     if [ "$1" == "-r" ]; then
         
@@ -112,7 +112,7 @@ function listen(){
     DESTINATION=$3
     
     echo $IP
-
+    
     if [ -z $IP ]; then
         
         echo "Error no IP address specified"
@@ -139,7 +139,7 @@ function listen(){
 }
 
 function split_file(){
-
+    
     delta_split=0
     
     
@@ -150,7 +150,7 @@ function split_file(){
         
         if [ "$delta_split" == "1" ]; then
             
-            sudo echo "$line" >> $hosts_file 
+            sudo echo "$line" >> $hosts_file
             
             elif [ "$line" != "$2" ] && [ "$delta_split" == "0" ]; then
             
@@ -170,14 +170,12 @@ function split_file(){
         sudo mv /etc/hosts $backup_folder
     fi
     
-    sudo mv $hosts /etc/hosts
+    sudo mv $hosts_file /etc/hosts
     sudo mv $master_config $etc_folder
     hosts_file="/etc/hosts"
     master_config="../etc/master.conf"
     
 }
-
-
 
 
 # Calls the config file and sources its variables
@@ -217,12 +215,12 @@ if [ -f ../etc/mpi-node.conf ]; then
     
 fi
 
-# If the user is running the "no gui" option then skip the input 
+# If the user is running the "no gui" option then skip the input
 if [ "$1" != "-ng" ]; then
-
+    
     clear
     echo -e "Welcome to Pleiades Node installer version 0.3! \n"
-
+    
     read -p "Enter the IP of your Master node: " IP
     
     echo "Pinging..."
@@ -239,7 +237,7 @@ if [ "$1" != "-ng" ]; then
         SUCCESS=$?
         
     done
-
+    
     echo -e "Ping from $IP successful! \n"
     read -p "Enter the port that the Master is transmitting on[1000]: " port
     
@@ -248,18 +246,36 @@ if [ "$1" != "-ng" ]; then
         port=1000
         
     fi
-
+    
 fi
 
 transfer_file="../tmp/transfer"
 
 if [ "$1" == "-ng" ]; then
-
+    
     listen $2 $3 $transfer_file
     
 else
-
+    
     listen $IP $port $transfer_file
+    
+fi
+
+while [ ! -f $transfer_file ]; then
+    
+    echo "No transmission from port $port, retrying..."
+    if [ "$1" == "-ng" ]; then
+        
+        listen $2 $3 $transfer_file
+        
+    else
+        
+        listen $IP $port $transfer_file
+        
+    fi
+    echo "Error no transmission"
+    exit 2
+    
     
 fi
 
@@ -296,17 +312,17 @@ echo "DEBUG :: NODE NAMES: ${node_names_array[@]}"
 n=0
 
 for name in ${node_names_array[@]}; do
-
-
+    
+    
     if [ "$name" == "$HOSTNAME" ]; then
-
+        
         write_config N $n
-
+        
     fi
-
-
+    
+    
     n="$((n+1))"
-
+    
 done
 
 
@@ -319,10 +335,10 @@ sudo useradd -m "$mpi_username"
 # Needs a password to be set!!!
 
 if [ -d /home/$mpi_username ]; then
-
+    
     echo "DEBUG :: -d"
     sudo mount $master:/home/$mpi_username /home/$mpi_username
-
+    
 fi
 
 sudo mount $master:/home/$mpi_username /home/$mpi_username
