@@ -92,7 +92,7 @@ function generate_config() {
     
     source $config_file
     
-    echo -e "Empty config file generated!"
+    echo -e "Empty master config file generated!"
 }
 
 # Function to write config file
@@ -453,6 +453,7 @@ while [ "$changed_exports" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     sudo mv $filename /etc/
     
+    # Timestamp does not work
     datetime="$(date '+%Y-%m-%d %H:%M:%S')"
     sudo sed -i "1s/^/Backup of hosts file created on $datetime\n/" ../backup/exports
     echo -e "Moved exports file to backup!"

@@ -1,30 +1,114 @@
 #!/bin/bash
 
-# Checks if netcat is installed, if not it installs it. Skips if ran with -i argument
-if [ "$#" == "-i" ]; then
-    if [ "$(dpkg-query -W --showformat='${Status}\n' netcat|grep "install ok installed" )" == "install ok installed" ]; then
-        
-        echo -e "Installing dependencies..."
-        sudo apt-get update -y >/dev/null
-        sudo apt-get install netcat -y >/dev/null
-        echo "Done!"
-        
+# Checks if program is running as root
+if [ "$EUID" -ne 0 ]; then
+    echo "Please run this program as root"
+    exit
+fi
+
+version="0.4"
+config_file="../etc/mpi-node.conf"
+backup_folder="../backup/"
+tmp_folder="../tmp/"
+etc_folder="../etc/"
+head_ip=$( ip route get 8.8.8.8 | awk -F"src " 'NR==1{split($2,a," ");print a[1]}' )
+cluster_names=()
+cluster_ips=()
+
+
+# Checks for debug arguments if the argument is -r then it only regenerates config file.
+# If the argument is -d then deletes the entire program structure as if it were a fresh install
+# If you would like to delete the user that the script creates for you, run with the second
+# argument as the username
+if [ "$1" == "-r" ] || [ "$1" == "-d" ]; then
+    
+    sudo rm $config_file
+    
+    if [ ! -z $2 ]; then
+        sudo deluser --remove-home $2 > /dev/null
     fi
     
-    # Checks if nfs-common is installed, if not it installs is
-    if [ "$(dpkg-query -W --showformat='${Status}\n' nfs-common|grep "install ok installed" )" == "install ok installed" ]; then
+    if [ "$1" == "-d" ]; then
         
-        echo -e "Installing dependencies..."
-        sudo apt-get update -y >/dev/null
-        sudo apt-get install nfs-common -y >/dev/null
-        echo "Done!"
+        sudo rm -r $backup_folder
+        sudo rm -r $etc_folder
+        sudo rm -r $tmp_folder
         
     fi
 fi
 
-# Creates a backup folder for all files being replaced
-if [ ! -d "./backup" ]; then
-    mkdir backup
+# If it cannot find the config folder, it will assume that the program structure has
+# not yet been created. If the etc folder has been created it clears the tmp directory
+if [ ! -d $etc_folder ]; then
+    
+    mkdir $etc_folder
+    mkdir $tmp_folder
+    mkdir $backup_folder
+    
+else
+    
+    sudo rm -r $tmp_folder
+    mkdir $tmp_folder
+    
+fi
+
+# Generates an empty config file to /etc/mpi-config, if run with -r paramter it removes
+# the config file and generates a new one
+function generate_config() {
+    
+    if [ "$1" == "-r" ]; then
+        
+        sudo rm $config_file
+        
+    fi
+    
+    sudo touch $config_file
+    
+    sudo echo "version=$version" >> $config_file
+    sudo echo "setup_started=1"  >> $config_file
+    sudo echo "installed_dependencies=0"  >> $config_file
+    sudo echo "cluster_name=''"  >> $config_file
+    sudo echo "cluster_size=" >> $config_file
+    sudo echo "master=''" >> $config_file
+    sudo echo "mpi_username=''" >> $config_file
+    sudo echo "mpi_password=''" >> $config_file
+    sudo echo "node_name=''" >> $config_file
+    sudo echo "node_ip=''" >> $config_file
+    sudo echo "user_created=0" >> $config_file
+    sudo echo "nfs_mounted=0" >> $config_file
+    sudo echo "ssh_secured=0" >> $config_file
+    sudo echo "changed_fstab=0" >> $config_file
+    sudo echo "changed_hosts=0" >> $config_file
+    sudo echo "directory_set=0" >> $config_file
+    sudo echo "default_port=1000" >> $config_file
+    sudo echo "#" >> $config_file
+    
+    sleep 0.5
+    
+    source $config_file
+    
+    echo -e "Empty node config file generated!"
+}
+
+
+
+if [ "$(dpkg-query -W --showformat='${Status}\n' netcat|grep "install ok installed" )" != "install ok installed" ]; then
+    
+    echo -e "Installing dependencies..."
+    sudo apt-get update -y >/dev/null
+    sudo apt-get install netcat -y >/dev/null
+    echo "Done!"
+    
+fi
+
+# Checks if nfs-common is installed, if not it installs is
+if [ "$(dpkg-query -W --showformat='${Status}\n' nfs-common|grep "install ok installed" )" != "install ok installed" ]; then
+    
+    echo -e "Installing dependencies..."
+    sudo apt-get update -y >/dev/null
+    sudo apt-get install nfs-common -y >/dev/null
+    echo "Done!"
+    
 fi
 
 function listen(){
@@ -138,7 +222,7 @@ if [ "$1" != "-ng" ]; then
         
         PORT=1000
         
-    fi    
+    fi
     
 fi
 
@@ -154,11 +238,11 @@ fi
 
 if [ $1 == "-ng" ]; then
     listen $2 $3 $transfer_file
-
+    
 else
-
+    
     listen $IP $PORT $transfer_file
-
+    
 fi
 
 echo "Listening..."
@@ -207,12 +291,4 @@ sudo mount ${node_names_array[0]}:/home/$mpi_username /home/$mpi_username
 
 
 exit
-
-
-
-
-if [ "$1" == "-d" ]; then
-    
-    sudo apt-get purge nfs-common -y
-    
-fi
+#EOF
