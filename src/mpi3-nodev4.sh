@@ -102,8 +102,11 @@ function listen(){
     PORT=$2
     DESTINATION=$3
     
-    
-    if [ -z $IP_address ]; then
+    echo $IP
+
+    exit
+
+    if [ -z $IP ]; then
         
         echo "Error no IP address specified"
         exit 1
