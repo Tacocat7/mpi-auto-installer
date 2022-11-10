@@ -494,11 +494,14 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     cat $config_file | sudo tee -a $transfer_file >/dev/null
     cat /etc/hosts | sudo tee -a $transfer_file >/dev/null
     
-    transmit_time=2
+    transmit_time=4
+
+    cluster_ips=(${node_ips//,/ })
+
     
     for IP in ${cluster_ips[@]}; do
         if [ "$head_ip" != "$IP" ]; then
-            sudo netcat -w $transmit_time $IP $port < "./backup/transfer"
+            sudo netcat -w $transmit_time $IP $port < $transfer_file
         fi
     done
     
