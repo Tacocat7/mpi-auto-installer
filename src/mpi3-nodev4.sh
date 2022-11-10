@@ -78,7 +78,7 @@ function generate_config() {
     sudo echo "cluster_size=$cluster_size" >> $config_file
     sudo echo "master=$master" >> $config_file
     sudo echo "mpi_username=$mpi_username" >> $config_file
-    sudo echo "mpi_password=$mpi_password" >> $config_file
+    sudo echo "secret=$secret" >> $config_file
     sudo echo "node_name=$HOSTNAME" >> $config_file
     sudo echo "node_ip=$node_ip" >> $config_file
     sudo echo "user_created=0" >> $config_file
@@ -331,8 +331,14 @@ sleeptime=$(( 1*$N ))
 echo "Sleeping for $sleeptime"
 sleep $sleeptime
 
-sudo useradd -m "$mpi_username" -s /bin/bash 
-# Needs a password to be set!!!
+if [ -d /home/$mpi_username ]; then
+    
+    echo "User exists"
+else
+    sudo useradd -m "$mpi_username" -s /bin/bash
+    # Needs a password to be set!!!
+    echo "$mpi_username:$secret" | sudo chpasswd
+fi
 
 if [ -d /home/$mpi_username ]; then
     

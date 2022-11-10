@@ -71,7 +71,7 @@ function generate_config() {
     sudo echo "mpi_distribution=''" >> $config_file
     sudo echo "master=''" >> $config_file
     sudo echo "mpi_username=''" >> $config_file
-    sudo echo "mpi_password=''" >> $config_file
+    sudo echo "secret=''" >> $config_file
     sudo echo "node_names=''" >> $config_file
     sudo echo "node_ips=''" >> $config_file
     sudo echo "input_set=0" >> $config_file
@@ -422,8 +422,10 @@ while [ "$user_created" != "1" ] && [ "$setup_complete" != "1" ]; do
         
     done
     
-    sudo useradd -m "$mpi_username" -s /bin/bash --uid 45
+    
+    sudo useradd -m "$mpi_username" -s /bin/bash
     echo "$mpi_username:$user_password" | sudo chpasswd
+    write_config secret $user_password
     
     echo -e "\nUser [$mpi_username] created!"
     
