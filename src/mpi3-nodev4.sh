@@ -141,11 +141,9 @@ function split_file(){
     
     while read -r line; do
         
-        echo $line
-        
         if [ "$delta_split" == "1" ]; then
             
-            sudo echo "$line" >> $hosts_file
+            sudo echo "$line" >> $hosts_file 
             
             elif [ "$line" != "$2" ] && [ "$delta_split" == "0" ]; then
             
@@ -161,11 +159,11 @@ function split_file(){
         
     done <$1
     
-    #if [ -f /etc/hosts ]; then
-    #    sudo mv /etc/hosts $backup_folder
-    #fi
+    if [ -f /etc/hosts ]; then
+        sudo mv /etc/hosts $backup_folder
+    fi
     
-    # sudo mv $hosts /etc/
+    sudo mv $hosts /etc/
     sudo mv $master_config $etc_folder
     
 }
