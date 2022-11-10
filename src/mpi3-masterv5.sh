@@ -190,7 +190,7 @@ function check_nfs(){
 
 clear
 
-echo -e "Welcome to Pleiades MPI installer version 0.4! \n"
+echo -e "Welcome to Pleiades MPI installer version 0.5! \n"
 
 # Checks the config file to see if the user has completed any steps, if it has AND the config file
 # has not marked off the completion of the process, THEN the user is prompted to choose whether
@@ -509,6 +509,8 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     echo -e "\nWaiting for node confirmation..."
     # WAIT FOR EACH NODE CONFIRMATION
     
+    # The main loop MUST run ONCE or else weird stuff happens
+    exit
 done
 
 exit 0
