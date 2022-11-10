@@ -104,8 +104,6 @@ function listen(){
     
     echo $IP
 
-    exit
-
     if [ -z $IP ]; then
         
         echo "Error no IP address specified"
