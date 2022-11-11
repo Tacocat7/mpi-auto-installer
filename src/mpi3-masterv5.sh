@@ -463,6 +463,7 @@ while [ "$changed_exports" != "1" ] && [ "$setup_complete" != "1" ]; do
     write_config changed_exports "1"
     
     echo -e "\nRestarting Service..."
+    sudo exportfs -a
     sudo service nfs-kernel-server restart
     sleep 0.2
     echo -e "Done!\n"
