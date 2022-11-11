@@ -1,10 +1,11 @@
 # MPI Auto Installer
-An automatic MPI cluser setup script for Ubuntu 22.04
+An automatic cluster software configuration script for Linux
 
-This program looks to implement the bash script MPI installer outlined in the Project Pleiades research proposal.
+This program is a simple bash script which sets up the basic configuration for a HPC cluster. The final state of your system after the configuration of this script should be a barebones computing cluster. Subsequent cluster software such as SLURM or any other workload manager is installed on top of this configuration.
 
-The program installs and sets up an MPI cluster with openMPI as its default distribution. This program was specifically
-crafted for a small hardware cluster built from 8 outdated office computers. 
+This program installs openMPI by default, but will be expanded to other distributions in the future.
+
+This program is experimental, and is thought to only work in LAN networks.
 
 ### The program is currently in active development and not finished!
 
