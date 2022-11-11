@@ -193,7 +193,7 @@ else
 fi
 
 # Only installs dependencies if config file says so
-if [ -f ../etc/mpi-node.conf ]; then
+if [ -f $config_file ]; then
     echo -e "Updating apt..."
     sudo apt-get update -y >/dev/null
     
@@ -296,7 +296,6 @@ hosts_file="/etc/hosts"
 master_config="../etc/master.conf"
 
 
-
 # Generates node config from master config
 if [ ! -f "$config_file" ]; then
     echo "Generating new config file..."
@@ -304,47 +303,64 @@ if [ ! -f "$config_file" ]; then
     generate_config
 fi
 
-source "../etc/mpi-node.conf"
+source "$config_file"
 
 node_names_array=(${node_names//,/ })
-echo "DEBUG :: NODE NAMES: ${node_names_array[@]}"
 
-n=0
-
-for name in ${node_names_array[@]}; do
+while [ -z $N ]; do
     
+    n=0
     
-    if [ "$name" == "$HOSTNAME" ]; then
+    for name in ${node_names_array[@]}; do
         
-        write_config N $n
+        if [ "$name" == "$HOSTNAME" ]; then
+            
+            write_config N $n
+            
+        fi
         
-    fi
-    
-    
-    n="$((n+1))"
+        n="$((n+1))"
+        
+    done
     
 done
 
+#sleeptime=$(( 1*$N ))
 
-sleeptime=$(( 1*$N ))
+#echo "Sleeping for $sleeptime"
+#sleep $sleeptime
 
-echo "Sleeping for $sleeptime"
-sleep $sleeptime
-
-if [ -d /home/$mpi_username ]; then
+# If user is not created then create it, skip otherwise
+while [ "$user_created" != "1" ]; do
     
-    echo "User exists"
-else
-    sudo useradd -m "$mpi_username" -s /bin/bash
-    # Needs a password to be set!!!
-    echo "$mpi_username:$secret" | sudo chpasswd
-fi
-
-if [ -d /home/$mpi_username ]; then
+    if [ -d /home/$mpi_username ]; then
+        
+        echo "User exists"
+    else
+        sudo useradd -m "$mpi_username" -s /bin/bash
+        # Needs a password to be set!!!
+        echo "$mpi_username:$secret" | sudo chpasswd
+        
+        write_config user_created 1
+    fi
     
-    echo "DEBUG :: -d"
+    
+done
+
+while [ -d /home/$mpi_username ] && [ "$nfs_mounted" != "1" ]; do
+    
     sudo mount $master:/home/$mpi_username /home/$mpi_username
     
-fi
+    sleep 1
 
-sudo mount $master:/home/$mpi_username /home/$mpi_username
+    if [ "$master:/home/$mpi_username" ~= "$(df -h | grep $master)" ]; then
+
+        echo "Mounted onto $master"
+        write_config nfs_mounted 1
+
+    fi 
+
+done
+
+read "End of file!"
+exit
