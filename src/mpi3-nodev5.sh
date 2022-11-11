@@ -50,8 +50,8 @@ else
     # Reset directories for debugging
     sudo rm -r $tmp_folder
     mkdir $tmp_folder
-    sudo rm -r $etc_folder
-    mkdir $etc_folder
+    #sudo rm -r $etc_folder
+    #mkdir $etc_folder
     sudo rm -r $backup_folder
     mkdir $backup_folder
     
@@ -180,6 +180,7 @@ function split_file(){
 
 # Calls the config file and sources its variables
 if [ -f $config_file ]; then
+    echo "Config found!"
     source "$config_file"
 fi
 
@@ -193,7 +194,7 @@ else
 fi
 
 # Only installs dependencies if config file says so
-if [ -f $config_file ]; then
+if [ ! -f $config_file ]; then
     echo -e "Updating apt..."
     sudo apt-get update -y >/dev/null
     
@@ -333,17 +334,11 @@ done
 # If user is not created then create it, skip otherwise
 while [ "$user_created" != "1" ]; do
     
-    if [ -d /home/$mpi_username ]; then
-        
-        echo "User exists"
-    else
-        sudo useradd -m "$mpi_username" -s /bin/bash
-        # Needs a password to be set!!!
-        echo "$mpi_username:$secret" | sudo chpasswd
-        
-        write_config user_created 1
-    fi
+    sudo useradd -m "$mpi_username" -s /bin/bash
+    # Needs a password to be set!!!
+    echo "$mpi_username:$secret" | sudo chpasswd
     
+    write_config user_created 1
     
 done
 
@@ -352,15 +347,17 @@ while [ -d /home/$mpi_username ] && [ "$nfs_mounted" != "1" ]; do
     sudo mount $master:/home/$mpi_username /home/$mpi_username
     
     sleep 1
-
-    if [ "$master:/home/$mpi_username" ~= "$(df -h | grep $master)" ]; then
-
+    
+    if df -h | grep $master ; then
+        
         echo "Mounted onto $master"
         write_config nfs_mounted 1
-
-    fi 
-
+        
+    fi
+    
 done
 
-read "End of file!"
+
+
+read -p "End of file!"
 exit
