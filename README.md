@@ -54,3 +54,4 @@ Running the script with -r parameter only regenerates the config file
 6. Make the program POSIX friendly
 7. Make a parity check sysytem for NFS filesystem
 8. Fix /hosts file not being backed up when they restart the installer
+9. Add elapsed time for sending node data
