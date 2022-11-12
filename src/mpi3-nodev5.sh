@@ -217,7 +217,7 @@ if [ ! -f $config_file ]; then
 fi
 
 # If the user is running the "no gui" option then skip the input
-if [ "$1" != "-ng" ]; then
+if [ "$1" != "-ng" ] && [ "$changed_hosts" != "1" ]; then
     
     clear
     echo -e "Welcome to Pleiades Node installer version 0.3! \n"
