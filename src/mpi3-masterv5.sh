@@ -138,10 +138,10 @@ if [ "$installed_dependencies" != "1" ]; then
         sudo apt-get install nfs-kernel-server -y >/dev/null
         echo "Done!"
 
-        elif [ "$(dpkg-query -W --showformat='${Status}\n' ssh-server|grep "install ok installed")" != "install ok installed" ]; then 
+        elif [ "$(dpkg-query -W --showformat='${Status}\n' openssh-server|grep "install ok installed")" != "install ok installed" ]; then 
 
         echo "Installing SSH server..."
-        sudo apt-get install ssh-server -y >/dev/null
+        sudo apt-get install openssh-server -y >/dev/null
         echo "Done!"
         
     fi
@@ -558,11 +558,56 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     echo -e "\nWaiting for node confirmation..."
     # WAIT FOR EACH NODE CONFIRMATION
 
-    check_nfs
+    # Iterates through the node names and refernces netstat
+    node_names_array=(${node_names//,/ })
+    connected_nodes=()
+    rogue_nodes=()
+    
+    for name in ${node_names_array[@]}; do
+        
+        if [ "$name" != "$HOSTNAME" ]; then
+            
+            if netstat | grep $name>/dev/null ; then
+                
+                echo "$name connected!"
+                connected_nodes+=( "$name" )
+                
+            else
+                
+                echo "$name not connected!"
+                rogue_nodes+=( "$name" )
+                
+            fi
+            
+        fi
+        
+    done
+    
+    
+    if [ "${#connected_nodes[@]}" == "$cluster_size" ]; then
+       
+       echo -e "\nAll nodes connected to $HOSTNAME!"
+       write_config nfs_mounted 1
+       break
+
+       else
+
+       echo "Nodes not connected"
+       exit 10
+
+    fi
+    
+
     
     # The main loop MUST run ONCE or else weird stuff happens
-    break
 done
+
+while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do
+
+    sudo runuser -l mpiuser -c "ssh-copy-id localhost"
+
+done
+
 
 exit 0
 #EOF

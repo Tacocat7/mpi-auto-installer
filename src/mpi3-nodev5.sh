@@ -169,10 +169,6 @@ function split_file(){
     if [ -f /etc/hosts ]; then
         sudo mv /etc/hosts $backup_folder
     fi
-
-    cat $hosts_file
-
-    cat $master_config
     
     sudo mv $hosts_file /etc/hosts
     sudo mv $master_config $etc_folder
@@ -359,6 +355,13 @@ while [ -d /home/$mpi_username ] && [ "$nfs_mounted" != "1" ]; do
         
     fi
     
+done
+
+while [ "$N" == "1" ] && [ "$ssh_secured" != "1" ]; do
+
+    echo "Remember, the system needs passwordless SSH to work properly so do NOT set a password"
+    sudo runuser -l $mpi_username -c "ssh-keygen -N '' -f /home/$mpi_username/.ssh/id_rsa -q"
+
 done
 
 
