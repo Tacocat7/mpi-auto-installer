@@ -171,10 +171,8 @@ function split_file(){
     fi
 
     cat $hosts_file
-    read -p "Hosts:"
 
     cat $master_config
-    read -p "Master: "
     
     sudo mv $hosts_file /etc/hosts
     sudo mv $master_config $etc_folder
