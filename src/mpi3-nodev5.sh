@@ -169,6 +169,12 @@ function split_file(){
     if [ -f /etc/hosts ]; then
         sudo mv /etc/hosts $backup_folder
     fi
+
+    cat $hosts_file
+    read -p "Hosts:"
+
+    cat $master_config
+    read -p "Master: "
     
     sudo mv $hosts_file /etc/hosts
     sudo mv $master_config $etc_folder
@@ -283,12 +289,13 @@ done
 if [ -f $transfer_file ] && [ "$changed_hosts" != "1" ]; then
     
     echo -e "\nSuccessfully copied configuration from MASTER!"
+    # Splits the transferred file, and moves the new files to /etc/mpi-config-conf and /etc/hosts
+    split_file $transfer_file "#"
     
 elif [ "$changed_hosts" != "1" ]; then
     
     echo "Error: No file recieved"
-    # Splits the transferred file, and moves the new files to /etc/mpi-config-conf and /etc/hosts
-    split_file $transfer_file "#"
+    
     
 fi
 
@@ -327,15 +334,20 @@ done
 
 
 # If user is not created then create it, skip otherwise
-while [ "$user_created" != "1" ]; do
+if [ "$user_created" != "1" ] && [ -d /home/$mpi_username ]; then
     
     sudo useradd -m "$mpi_username" -s /bin/bash
     # Needs a password to be set!!!
     echo "$mpi_username:$secret" | sudo chpasswd
     
     write_config user_created 1
+
+elif [ "$user_created" == "1" ] && [ -d /home/$mpi_username ]; then
+
+
+    write_config user_created 0
     
-done
+fi
 
 while [ -d /home/$mpi_username ] && [ "$nfs_mounted" != "1" ]; do
     

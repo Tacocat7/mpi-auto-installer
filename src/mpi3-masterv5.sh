@@ -151,7 +151,7 @@ function join_array() {
     echo "$*"
 }
 
-function check_nfs(){
+function parity_check(){
     
     echo "DEBUG :: $1 $2"
     
@@ -187,6 +187,46 @@ function check_nfs(){
     done
     
 }
+
+function check_nfs(){
+    
+    # Iterates through the node names and refernces netstat
+    node_names_array=(${node_names//,/ })
+    connected_nodes=()
+    rogue_nodes=()
+    
+    for name in ${node_names_array[@]}; do
+        
+        if [ "$name" != "$HOSTNAME" ]; then
+            
+            if netstat | grep $name>/dev/null ; then
+                
+                echo "$name connected!"
+                connected_nodes+=( "$name" )
+                
+            else
+                
+                echo "$name not connected!"
+                rogue_nodes+=( "$name" )
+                
+            fi
+            
+        fi
+        
+    done
+    
+    
+    if [ "${#connected_nodes[@]}" == "$cluster_size" ]; then
+       
+       echo -e "\nAll nodes connected to $HOSTNAME!"
+       write_config nfs_mounted 1
+
+    fi
+    
+    
+    
+}
+
 
 clear
 
@@ -332,7 +372,7 @@ while [ "$changed_hosts" != "1" ] && [ "$setup_complete" != "1" ]; do
         
         sudo mv /etc/hosts $backup_folder
         echo "Transferred old hosts file to backup!"
-
+        
     fi
     
     # Generates a hosts file
@@ -352,11 +392,11 @@ while [ "$changed_hosts" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     sudo mv $hosts_file /etc/
     hosts_file="/etc/hosts"
-
+    
     # Gives a timestamp for backup file
     datetime="$(date '+%Y-%m-%d %H:%M:%S')" | sudo sed -i "1s/^/Backup of hosts file created on $datetime\n/" ../backup/hosts
-    echo -e "/etc/hosts file generated and updated! \n"    
-
+    echo -e "/etc/hosts file generated and updated! \n"
+    
     write_config changed_hosts "1"
     
 done
@@ -448,9 +488,9 @@ while [ "$changed_exports" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     # If exports exists then send it to backup
     if [ -f /etc/exports ]; then
-
+        
         sudo mv /etc/exports $backup_folder
-
+        
     fi
     
     sudo mv $filename /etc/
@@ -473,12 +513,12 @@ done
 
 # Tries to mount filesystem to nodes, only if config file says so
 while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
-
+    
     transfer_file="../tmp/transfer"
-
+    
     # Port to transmit netcat data
     read -p "Enter the port to send transfer data to [1000]: " port
-
+    
     if [ -z $port ]; then
         port="1000"
     else
@@ -492,15 +532,15 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     read -p "Run slave installer with \$(sudo mpi3 -ng $head_ip $port) NOW, before continuing..."
     echo -e "\nTransmitting packets from $head_ip on port $port"
-        
+    
     touch $transfer_file
     cat $config_file | sudo tee -a $transfer_file >/dev/null
     cat /etc/hosts | sudo tee -a $transfer_file >/dev/null
     
     transmit_time=1
-
+    
     cluster_ips=(${node_ips//,/ })
-
+    
     
     for IP in ${cluster_ips[@]}; do
         if [ "$head_ip" != "$IP" ]; then
@@ -511,11 +551,9 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     echo -e "\nFiles transmitted"
     echo -e "\nWaiting for node confirmation..."
     # WAIT FOR EACH NODE CONFIRMATION
-
-
     
     # The main loop MUST run ONCE or else weird stuff happens
-    exit
+    break
 done
 
 exit 0
