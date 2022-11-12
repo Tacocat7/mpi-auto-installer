@@ -252,17 +252,17 @@ fi
 
 transfer_file="../tmp/transfer"
 
-if [ "$1" == "-ng" ]; then
+if [ "$1" == "-ng" ] && [ "$changed_hosts" != "1" ]; then
     
     listen $2 $3 $transfer_file
     
-else
+elif [ "$changed_hosts" != "1" ]; then
     
     listen $IP $port $transfer_file
     
 fi
 
-while [ ! -f $transfer_file ]; do
+while [ ! -f $transfer_file ] && [ "$changed_hosts" != "1" ]; do
     
     echo "No transmission from port $port, retrying..."
     if [ "$1" == "-ng" ]; then
@@ -280,18 +280,17 @@ while [ ! -f $transfer_file ]; do
     
 done
 
-if [ -f $transfer_file ]; then
+if [ -f $transfer_file ] && [ "$changed_hosts" != "1" ]; then
     
     echo -e "\nSuccessfully copied configuration from MASTER!"
     
-else
+elif [ "$changed_hosts" != "1" ]; then
     
     echo "Error: No file recieved"
+    # Splits the transferred file, and moves the new files to /etc/mpi-config-conf and /etc/hosts
+    split_file $transfer_file "#"
     
 fi
-
-# Splits the transferred file, and moves the new files to /etc/mpi-config-conf and /etc/hosts
-split_file $transfer_file "#"
 
 hosts_file="/etc/hosts"
 master_config="../etc/master.conf"
@@ -326,10 +325,6 @@ while [ -z $N ]; do
     
 done
 
-#sleeptime=$(( 1*$N ))
-
-#echo "Sleeping for $sleeptime"
-#sleep $sleeptime
 
 # If user is not created then create it, skip otherwise
 while [ "$user_created" != "1" ]; do
