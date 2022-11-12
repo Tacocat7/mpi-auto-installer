@@ -128,14 +128,20 @@ if [ "$installed_dependencies" != "1" ]; then
     # Checks if netcat and nfs-kernel-server is installed, if not it installs is
     if [ "$(dpkg-query -W --showformat='${Status}\n' netcat|grep "install ok installed" )" != "install ok installed" ]; then
         
-        echo -e "Installing dependencies..."
+        echo -e "Installing Netcat..."
         sudo apt-get install netcat -y >/dev/null
         echo "Done!"
         
         elif [ "$(dpkg-query -W --showformat='${Status}\n' nfs-kernel-server|grep "install ok installed")" != "install ok installed" ]; then
         
-        echo "Installing dependencies..."
+        echo "Installing NFS-server..."
         sudo apt-get install nfs-kernel-server -y >/dev/null
+        echo "Done!"
+
+        elif [ "$(dpkg-query -W --showformat='${Status}\n' ssh-server|grep "install ok installed")" != "install ok installed" ]; then 
+
+        echo "Installing SSH server..."
+        sudo apt-get install ssh-server -y >/dev/null
         echo "Done!"
         
     fi
@@ -463,7 +469,7 @@ while [ "$user_created" != "1" ] && [ "$setup_complete" != "1" ]; do
     done
     
     
-    sudo useradd -m "$mpi_username" -s /bin/bash
+    sudo useradd -m "$mpi_username" -s /bin/bash -u 1500
     echo "$mpi_username:$user_password" | sudo chpasswd
     write_config secret $user_password
     
@@ -554,6 +560,24 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     # The main loop MUST run ONCE or else weird stuff happens
     break
+done
+
+
+while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do 
+
+    
+    sudo cd /home/$mpi_username
+    read
+    cd /home/$mpi_username
+    read
+
+    ssh-keygen
+
+    ssh-copy-id localhost
+    
+    exit
+
+
 done
 
 exit 0
