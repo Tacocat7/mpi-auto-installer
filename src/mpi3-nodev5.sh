@@ -332,9 +332,8 @@ while [ -z $N ]; do
     
 done
 
-
 # If user is not created then create it, skip otherwise
-if [ "$user_created" != "1" ] && [ -d /home/$mpi_username ]; then
+if [ "$user_created" != "1" ] && [ ! -d /home/$mpi_username ]; then
     
     sudo useradd -m "$mpi_username" -s /bin/bash -u 1500
     # Needs a password to be set!!!

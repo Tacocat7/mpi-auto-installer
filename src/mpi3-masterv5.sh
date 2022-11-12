@@ -557,27 +557,11 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     echo -e "\nFiles transmitted"
     echo -e "\nWaiting for node confirmation..."
     # WAIT FOR EACH NODE CONFIRMATION
+
+    check_nfs
     
     # The main loop MUST run ONCE or else weird stuff happens
     break
-done
-
-
-while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do 
-
-    
-    sudo cd /home/$mpi_username
-    read
-    cd /home/$mpi_username
-    read
-
-    ssh-keygen
-
-    ssh-copy-id localhost
-    
-    exit
-
-
 done
 
 exit 0
