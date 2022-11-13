@@ -80,6 +80,7 @@ function generate_config() {
     sudo echo "mpi_username=$mpi_username" >> $config_file
     sudo echo "secret=$secret" >> $config_file
     sudo echo "node_name=$HOSTNAME" >> $config_file
+    sudo echo "node_names=$node_names" >> $config_file
     sudo echo "node_ip=$node_ip" >> $config_file
     sudo echo "user_created=0" >> $config_file
     sudo echo "nfs_mounted=0" >> $config_file

@@ -566,8 +566,11 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     for name in ${node_names_array[@]}; do
         
         if [ "$name" != "$HOSTNAME" ]; then
+
+            response=$( netstat | grep $name>/dev/null )
+            echo "DEBUG :: $response"
             
-            if netstat | grep $name>/dev/null ; then
+            if [ -z $response ] ; then
                 wait
                 echo "$name connected!"
                 connected_nodes+=( "$name" )
