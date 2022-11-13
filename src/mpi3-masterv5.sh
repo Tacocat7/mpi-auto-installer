@@ -310,10 +310,10 @@ while [ "$input_set" != "1" ] && [ "$setup_complete" != "1" ]; do
         fi
         
         # User inputs node name
-        read -p "Enter the name that will be associated to your node, no spaces: " slave_name
+        read -p "Enter the node's hostname(name it uses to talk to other computers): " slave_name
         while [ -z "$slave_name" ]; do
             echo "Error cannot be empty"
-            read -p "Enter the identification that will be associated to your node: " slave_name
+            read -p "Enter the node's hostname: " slave_name
         done
         
         while [[ "$slave_name" =~ " " ]]; do
@@ -570,7 +570,7 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
             response=$( netstat | grep $name>/dev/null )
             echo "DEBUG :: $response"
             
-            if [ -z $response ] ; then
+            if [ "$response" != "" ] ; then
                 wait
                 echo "$name connected!"
                 connected_nodes+=( "$name" )

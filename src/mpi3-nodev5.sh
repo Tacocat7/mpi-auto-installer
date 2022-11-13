@@ -315,6 +315,7 @@ while [ -z $N ]; do
     
     for name in ${node_names_array[@]}; do
         
+        # Note $name must be exactly the same as $HOSTNAME which may be entered incorrectly on the user's part
         if [ "$name" == "$HOSTNAME" ]; then
             
             write_config N $n
