@@ -183,6 +183,16 @@ function split_file(){
 if [ -f $config_file ]; then
     echo "Config found!"
     source "$config_file"
+
+    startup_nfs_check=$( df -h | grep $mpi_username )
+
+    if [ "$startup_nfs_check" == "" ]; then
+
+        set_config nfs_mounted 0
+
+    fi
+
+
 fi
 
 if [ -d $etc_folder ] && [ -d $backup_folder ] && [ -d $tmp_folder ]; then

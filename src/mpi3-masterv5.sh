@@ -143,7 +143,13 @@ if [ "$installed_dependencies" != "1" ]; then
         echo "Installing SSH server..."
         sudo apt-get install openssh-server -y >/dev/null
         echo "Done!"
-        
+
+        elif [ "$(dpkg-query -W --showformat='${Status}\n' sshpass|grep "install ok installed")" != "install ok installed" ]; then
+
+        echo "Installing dependencies"
+        sudo apt-get install sshpass -y >/dev/null
+        echo "Done!"
+
     fi
     
     write_config installed_dependencies "1"
@@ -560,64 +566,84 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     # Iterates through the node names and refernces netstat
     node_names_array=(${node_names//,/ })
-    connected_nodes=()
-    rogue_nodes=()
     
-    for name in ${node_names_array[@]}; do
-        
-        if [ "$name" != "$HOSTNAME" ]; then
+    while [ "$nfs_mounted" != "1" ]; do
 
-            response=$( netstat | grep $name>/dev/null )
-            echo "DEBUG :: $response"
+        sleep 2
+
+        connected_nodes=()
+        rogue_nodes=()
+
+
+        for name in ${node_names_array[@]}; do
             
-            if [ "$response" != "" ] ; then
-                wait
-                echo "$name connected!"
-                connected_nodes+=( "$name" )
+            if [ "$name" != "$HOSTNAME" ]; then
                 
-            else
+                response=$( netstat | grep $name )
                 wait
-                echo "$name not connected!"
-                rogue_nodes+=( "$name" )
+                
+                if [ "$response" != "" ] ; then
+                    
+                    echo "$name connected!"
+                    connected_nodes+=( "$name" )
+                    
+                    
+                else
+                    
+                    echo "$name not connected!"
+                    rogue_nodes+=( "$name" )
+                    
+                fi
                 
             fi
-            
+
+        done
+
+        if [ "${#connected_nodes[@]}" == "$cluster_size" ]; then
+
+            echo -e "\nAll nodes connected to $HOSTNAME!"
+            write_config nfs_mounted 1
+            break
+
+        else
+
+            echo "Error: No response from ${rogue_nodes}"
+
         fi
         
+
     done
     
-    
-    if [ "${#connected_nodes[@]}" == "$cluster_size" ]; then
-        
-        echo -e "\nAll nodes connected to $HOSTNAME!"
-        write_config nfs_mounted 1
-        break
-        
-    else
-        
-        echo "Nodes not connected"
-        exit 10
-        
-    fi
     # The main loop MUST run ONCE or else weird stuff happens
 done
 
 while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     echo "Checking for response..."
-    sleep 5
     
-    if [ -d "/home/$mpi_username/.mpi/ssh" ]; then
+    if [ -f /home/$mpi_username/.mpi/ssh ]; then
         
         echo "Response found!"
-        sudo runuser -l $mpi_username -c "ssh-copy-id localhost"
+        sudo runuser -l $mpi_username -c "sshpass -p $secret ssh-copy-id localhost" >/dev/null
+        sleep 2
+        ssh -o PasswordAuthentication=no -o "StrictHostKeyChecking no" -o BatchMode=yes beta exit &>/dev/null
+        ssh_check=$(test $? = 0 && echo can connect || echo cannot connect)
+        sleep 1
+
+        if [ $ssh_check == "can connect" ]; then
+
+            echo "SSH configured!"
+            write_config ssh_secured 1
+            break
+
+        fi 
+
         
     fi
-    
-    
-    
+        
 done
 
+read -p "Setup done :)"
 
 exit 0
 #EOF
