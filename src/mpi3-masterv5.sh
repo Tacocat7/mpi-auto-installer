@@ -568,12 +568,12 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
         if [ "$name" != "$HOSTNAME" ]; then
             
             if netstat | grep $name>/dev/null ; then
-                
+                wait
                 echo "$name connected!"
                 connected_nodes+=( "$name" )
                 
             else
-                
+                wait
                 echo "$name not connected!"
                 rogue_nodes+=( "$name" )
                 
@@ -596,17 +596,14 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
        exit 10
 
     fi
-    
-
-    
     # The main loop MUST run ONCE or else weird stuff happens
 done
 
-while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do
+#while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do
 
-    sudo runuser -l mpiuser -c "ssh-copy-id localhost"
+    echo 'sudo runuser -l mpiuser -c "ssh-copy-id localhost"'
 
-done
+#done
 
 
 exit 0

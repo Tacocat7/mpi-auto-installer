@@ -357,8 +357,9 @@ while [ -d /home/$mpi_username ] && [ "$nfs_mounted" != "1" ]; do
     
 done
 
+# Results in a program lock, FIX
 while [ "$N" == "1" ] && [ "$ssh_secured" != "1" ]; do
-
+    sleep 2
     echo "Remember, the system needs passwordless SSH to work properly so do NOT set a password"
     sudo runuser -l $mpi_username -c "ssh-keygen -N '' -f /home/$mpi_username/.ssh/id_rsa -q"
 
