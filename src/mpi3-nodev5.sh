@@ -392,7 +392,7 @@ while [ "$N" == "1" ] && [ "$ssh_secured" != "1" ]; do
 
     fi
     
-    if [ -d "/home/$mpi_username/.mpi/ssh" ]; then
+    if [ -f "/home/$mpi_username/.mpi/ssh" ]; then
         
         write_config ssh_secured 1
         break
@@ -401,5 +401,5 @@ while [ "$N" == "1" ] && [ "$ssh_secured" != "1" ]; do
     
 done
 
-read -p "End of file!"
+read -p "Script Finished!"
 exit

@@ -637,7 +637,12 @@ while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do
             write_config ssh_secured 1
             break
 
+        else 
+
+            echo "Error could not connect through ssh"
+
         fi 
+
 
         
     fi
