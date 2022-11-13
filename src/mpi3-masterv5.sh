@@ -628,9 +628,10 @@ while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do
         sleep 2
         ssh -o PasswordAuthentication=no -o "StrictHostKeyChecking no" -o BatchMode=yes beta exit &>/dev/null
         ssh_check=$(test $? = 0 && echo can connect || echo cannot connect)
+        echo "$ssh_check"
         sleep 1
 
-        if [ $ssh_check == "can connect" ]; then
+        if [ "$ssh_check" == "can connect" ]; then
 
             echo "SSH configured!"
             write_config ssh_secured 1
@@ -640,6 +641,8 @@ while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do
 
         
     fi
+
+    sleep 5
         
 done
 

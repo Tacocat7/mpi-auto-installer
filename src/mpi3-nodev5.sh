@@ -197,7 +197,7 @@ fi
 
 if [ -d $etc_folder ] && [ -d $backup_folder ] && [ -d $tmp_folder ]; then
     
-    echo "Directory made"
+    echo "Directory made!"
     
 else
     echo "Unknown error, could not create directory for program"
@@ -374,21 +374,32 @@ mpi_folder="/home/$mpi_username/.mpi"
 # Results in a program lock, FIX
 while [ "$N" == "1" ] && [ "$ssh_secured" != "1" ]; do
     
-    sudo runuser -l $mpi_username -c "mkdir ~/.mpi"
-    sudo runuser -l $mpi_username -c "ssh-keygen -N '' -f /home/$mpi_username/.ssh/id_rsa -q"
-    wait
-    
-    sudo runuser -l $mpi_username -c "touch ~/.mpi/ssh"
+    if [ ! -d /home/$mpi_username/.mpi ]; then
+
+        sudo runuser -l $mpi_username -c "mkdir ~/.mpi"
+
+    fi
+
+    if [ ! -f /home/$mpi_username/.ssh/id_rsa ]; then
+
+        sudo runuser -l $mpi_username -c "ssh-keygen -N '' -f /home/$mpi_username/.ssh/id_rsa -q"
+        wait
+
+    fi
+    if [ ! -f /home/$mpi_username/.mpi/ssh ]; then
+
+        sudo runuser -l $mpi_username -c "touch ~/.mpi/ssh"
+
+    fi
     
     if [ -d "/home/$mpi_username/.mpi/ssh" ]; then
         
-        read -p "Check if it worked :3"
+        write_config ssh_secured 1
+        break
         
     fi
     
 done
-
-
 
 read -p "End of file!"
 exit
