@@ -137,9 +137,9 @@ if [ "$installed_dependencies" != "1" ]; then
         echo "Installing NFS-server..."
         sudo apt-get install nfs-kernel-server -y >/dev/null
         echo "Done!"
-
-        elif [ "$(dpkg-query -W --showformat='${Status}\n' openssh-server|grep "install ok installed")" != "install ok installed" ]; then 
-
+        
+        elif [ "$(dpkg-query -W --showformat='${Status}\n' openssh-server|grep "install ok installed")" != "install ok installed" ]; then
+        
         echo "Installing SSH server..."
         sudo apt-get install openssh-server -y >/dev/null
         echo "Done!"
@@ -223,10 +223,10 @@ function check_nfs(){
     
     
     if [ "${#connected_nodes[@]}" == "$cluster_size" ]; then
-       
-       echo -e "\nAll nodes connected to $HOSTNAME!"
-       write_config nfs_mounted 1
-
+        
+        echo -e "\nAll nodes connected to $HOSTNAME!"
+        write_config nfs_mounted 1
+        
     fi
     
     
@@ -557,7 +557,7 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     echo -e "\nFiles transmitted"
     echo -e "\nWaiting for node confirmation..."
     # WAIT FOR EACH NODE CONFIRMATION
-
+    
     # Iterates through the node names and refernces netstat
     node_names_array=(${node_names//,/ })
     connected_nodes=()
@@ -585,25 +585,35 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     
     
     if [ "${#connected_nodes[@]}" == "$cluster_size" ]; then
-       
-       echo -e "\nAll nodes connected to $HOSTNAME!"
-       write_config nfs_mounted 1
-       break
-
-       else
-
-       echo "Nodes not connected"
-       exit 10
-
+        
+        echo -e "\nAll nodes connected to $HOSTNAME!"
+        write_config nfs_mounted 1
+        break
+        
+    else
+        
+        echo "Nodes not connected"
+        exit 10
+        
     fi
     # The main loop MUST run ONCE or else weird stuff happens
 done
 
-#while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do
-
-    echo 'sudo runuser -l mpiuser -c "ssh-copy-id localhost"'
-
-#done
+while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do
+    
+    echo "Checking for response..."
+    sleep 5
+    
+    if [ -d "/home/$mpi_username/.mpi/ssh" ]; then
+        
+        echo "Response found!"
+        sudo runuser -l $mpi_username -c "ssh-copy-id localhost"
+        
+    fi
+    
+    
+    
+done
 
 
 exit 0

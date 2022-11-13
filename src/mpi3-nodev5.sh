@@ -256,7 +256,7 @@ if [ "$1" == "-ng" ] && [ "$changed_hosts" != "1" ]; then
     
     listen $2 $3 $transfer_file
     
-elif [ "$changed_hosts" != "1" ]; then
+    elif [ "$changed_hosts" != "1" ]; then
     
     listen $IP $port $transfer_file
     
@@ -286,7 +286,7 @@ if [ -f $transfer_file ] && [ "$changed_hosts" != "1" ]; then
     # Splits the transferred file, and moves the new files to /etc/mpi-config-conf and /etc/hosts
     split_file $transfer_file "#"
     
-elif [ "$changed_hosts" != "1" ]; then
+    elif [ "$changed_hosts" != "1" ]; then
     
     echo "Error: No file recieved"
     
@@ -334,10 +334,10 @@ if [ "$user_created" != "1" ] && [ ! -d /home/$mpi_username ]; then
     echo "$mpi_username:$secret" | sudo chpasswd
     
     write_config user_created 1
-
-elif [ "$user_created" == "1" ] && [ -d /home/$mpi_username ]; then
-
-
+    
+    elif [ "$user_created" == "1" ] && [ -d /home/$mpi_username ]; then
+    
+    
     write_config user_created 0
     
 fi
@@ -357,12 +357,23 @@ while [ -d /home/$mpi_username ] && [ "$nfs_mounted" != "1" ]; do
     
 done
 
+mpi_folder="/home/$mpi_username/.mpi"
+
 # Results in a program lock, FIX
 while [ "$N" == "1" ] && [ "$ssh_secured" != "1" ]; do
-    sleep 2
-    echo "Remember, the system needs passwordless SSH to work properly so do NOT set a password"
+    
+    sudo runuser -l $mpi_username -c "mkdir ~/.mpi"
     sudo runuser -l $mpi_username -c "ssh-keygen -N '' -f /home/$mpi_username/.ssh/id_rsa -q"
-
+    wait
+    
+    sudo runuser -l $mpi_username -c "touch ~/.mpi/ssh"
+    
+    if [ -d "/home/$mpi_username/.mpi/ssh" ]; then
+        
+        read -p "Check if it worked :3"
+        
+    fi
+    
 done
 
 
