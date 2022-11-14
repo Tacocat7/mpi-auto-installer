@@ -143,13 +143,13 @@ if [ "$installed_dependencies" != "1" ]; then
         echo "Installing SSH server..."
         sudo apt-get install openssh-server -y >/dev/null
         echo "Done!"
-
+        
         elif [ "$(dpkg-query -W --showformat='${Status}\n' sshpass|grep "install ok installed")" != "install ok installed" ]; then
-
+        
         echo "Installing dependencies"
         sudo apt-get install sshpass -y >/dev/null
         echo "Done!"
-
+        
     fi
     
     write_config installed_dependencies "1"
@@ -568,13 +568,13 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
     node_names_array=(${node_names//,/ })
     
     while [ "$nfs_mounted" != "1" ]; do
-
+        
         sleep 2
-
+        
         connected_nodes=()
         rogue_nodes=()
-
-
+        
+        
         for name in ${node_names_array[@]}; do
             
             if [ "$name" != "$HOSTNAME" ]; then
@@ -596,22 +596,22 @@ while [ "$nfs_mounted" != "1" ] && [ "$setup_complete" != "1" ]; do
                 fi
                 
             fi
-
+            
         done
-
+        
         if [ "${#connected_nodes[@]}" == "$cluster_size" ]; then
-
+            
             echo -e "\nAll nodes connected to $HOSTNAME!"
             write_config nfs_mounted 1
             break
-
+            
         else
-
+            
             echo "Error: No response from ${rogue_nodes}"
-
+            
         fi
         
-
+        
     done
     
     # The main loop MUST run ONCE or else weird stuff happens
@@ -624,31 +624,60 @@ while [ "$ssh_secured" != "1" ] && [ "$setup_complete" != "1" ]; do
     if [ -f /home/$mpi_username/.mpi/ssh ]; then
         
         echo "Response found!"
-        sudo runuser -l $mpi_username -c "sshpass -p $secret ssh-copy-id localhost" >/dev/null
-        sleep 2
-        ssh -o PasswordAuthentication=no -o "StrictHostKeyChecking no" -o BatchMode=yes beta exit &>/dev/null
-        ssh_check=$(test $? = 0 && echo can connect || echo cannot connect)
-        echo "$ssh_check"
-        sleep 1
+        
+        sudo runuser -l $mpi_username -c "sshpass -p $secret ssh-copy-id -o StrictHostKeyChecking=no localhost -f"
+        wait
+        node_names_array=(${node_names//,/ })
+        connected_nodes=()
+        disconnected_nodes=()
 
-        if [ "$ssh_check" == "can connect" ]; then
+        echo "${node_names_array[@]}"
+        
+        for name in ${node_names_array[@]}; do
+            
+            if [ "$name" != "$HOSTNAME" ]; then
+                
+                echo "Checking SSH for $name..."
+                sleep 2
+                sudo runuser -l $mpi_username -c "ssh -o PasswordAuthentication=no -o StrictHostKeyChecking=no -o BatchMode=yes $name echo"
+                wait
+                sleep 2
+                ssh_check=$(sudo runuser -l $mpi_username -c "echo $?")
+                
+                if [ "$ssh_check" == "0" ]; then
+                    
+                    echo "SSH configured for $name!"
+                    connected_nodes+=( "$name" )
+                    
+                else
+                    
+                    echo "Error could not connect to $name through ssh"
+                    disconnected_nodes+=( "$name" )
+                    
+                fi
 
-            echo "SSH configured!"
+
+            fi
+            
+        done
+
+        if [ "${#connected_nodes[@]}" == "$cluster_size" ]; then
+
             write_config ssh_secured 1
             break
 
-        else 
+        else
 
-            echo "Error could not connect through ssh"
+            echo "No response recieved from the following nodes: ${disconnected_nodes[@]}"
+            read
+            exit 10
 
-        fi 
-
-
+        fi
         
     fi
-
+    
     sleep 5
-        
+    
 done
 
 read -p "Setup done :)"

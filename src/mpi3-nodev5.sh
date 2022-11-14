@@ -188,7 +188,7 @@ if [ -f $config_file ]; then
 
     if [ "$startup_nfs_check" == "" ]; then
 
-        set_config nfs_mounted 0
+        write_config nfs_mounted 0
 
     fi
 
